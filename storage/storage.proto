@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+message HelloRequest {
+}
+
+message StatusResponse {
+    string version = 1; // 系统版本
+    uint64 size = 2; // 存储空间大小
+    uint64 block = 3; // 允许最大块大小
+}
+
+message ContentRange {
+    uint64 start = 1;
+    uint64 end = 2;
+}
+
+message StorageRequest {
+    bytes hash = 1; // 总HASH
+    bytes dataHash = 2; // 数据HASH
+    bytes data = 3; // 存储的数据
+    uint64 size = 4; // 总大小
+    ContentRange range = 5; // 内容范围
+}
+
+message StorageResponse {
+    enum Error {
+        ERROR_NONE = 0; // 未知错误
+        ERROR_UNKNOWN = 1; // 未知错误
+        ERROR_LACK_STORAGE = 2; // 存储空间不足
+    }
+
+    Error code = 1;
+    string message = 2;
+}
+
+message GetResponse {
+    bytes hash = 1;
+}
+
+message DataBlock {
+    enum Type {
+        STREAM = 0; // 比特流
+        URI = 1; // 下载URI
+    }
+
+    enum Encode {
+        NONE = 0;
+        IMAGE = 1;
+    }
+
+    bytes hash = 1;
+    Type type = 2; // 块类型
+    ContentRange range = 3; // 范围
+    bytes data = 4; // 内容
+    Encode encode = 5; // 是否编码
+}
+
+message DataResponse {
+    bytes hash = 1; // 总HASH
+    repeated DataBlock blocks = 2;
+}
+
+service GoStorage {
+    // 获取状态
+    rpc Hello (HelloRequest) returns (StatusResponse) {
+    }
+
+    // 保存数据
+    rpc Save (StorageRequest) returns (StatusResponse) {
+    }
+
+    // 获取数据
+    rpc Get (StorageRequest) returns (DataResponse) {
+    }
+}
