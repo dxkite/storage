@@ -5,21 +5,32 @@ message HelloRequest {
 
 message StatusResponse {
     string version = 1; // 系统版本
-    uint64 size = 2; // 存储空间大小
-    uint64 block = 3; // 允许最大块大小
+    int64 size = 2; // 存储空间大小
+    int64 block = 3; // 允许最大块大小
 }
 
 message ContentRange {
-    uint64 start = 1;
-    uint64 end = 2;
+    int64 start = 1;
+    int64 end = 2;
 }
 
-message StorageRequest {
+
+message StorageCreateRequest {
+    bytes hash = 1; // 总HASH
+    int64 size = 2; // 总大小
+    string name = 3; // 文件名
+}
+
+message StorageStoreRequest {
     bytes hash = 1; // 总HASH
     bytes dataHash = 2; // 数据HASH
     bytes data = 3; // 存储的数据
-    uint64 size = 4; // 总大小
+    int64 size = 4; // 总大小
     ContentRange range = 5; // 内容范围
+}
+
+message StorageFinishRequest {
+    bytes hash = 1; // 总HASH
 }
 
 message StorageResponse {
@@ -60,16 +71,20 @@ message DataResponse {
     repeated DataBlock blocks = 2;
 }
 
-service GoStorage {
+service Storage {
     // 获取状态
     rpc Hello (HelloRequest) returns (StatusResponse) {
     }
-
-    // 保存数据
-    rpc Save (StorageRequest) returns (StatusResponse) {
+    // 创建数据
+    rpc Create (StorageCreateRequest) returns (StatusResponse) {
     }
-
+    // 保存数据
+    rpc Store (StorageCreateRequest) returns (StatusResponse) {
+    }
+    // 完成数据
+    rpc Finish (StorageCreateRequest) returns (StatusResponse) {
+    }
     // 获取数据
-    rpc Get (StorageRequest) returns (DataResponse) {
+    rpc Get (GetResponse) returns (DataResponse) {
     }
 }

@@ -2,14 +2,9 @@ package block
 
 import (
 	"crypto/sha1"
-	"dxkite.cn/go-storage/storage"
 	"os"
 	"testing"
 )
-
-func cr(start, end uint64) storage.ContentRange {
-	return storage.ContentRange{Start: start, End: end}
-}
 
 func TestBlockFile_WriteRange(t *testing.T) {
 	var r1 = []byte("hello world")
@@ -31,13 +26,13 @@ func TestBlockFile_WriteRange(t *testing.T) {
 		file: file,
 	}
 
-	if err := block.WriteRange(cr(uint64(len(r1)), uint64(len(r1)+len(r2))), r2); err != nil {
+	if err := block.WriteBlock(NewBlock(int64(len(r1)), int64(len(r1)+len(r2)), r2)); err != nil {
 		t.Error(err)
 	}
-	if err := block.WriteRange(cr(0, uint64(len(r1))), r1); err != nil {
+	if err := block.WriteBlock(NewBlock(0, int64(len(r1)), r1)); err != nil {
 		t.Error(err)
 	}
-	if err := block.WriteRange(cr(uint64(len(r1)+len(r2)), uint64(len(r1)+len(r2)+len(r3))), r3); err != nil {
+	if err := block.WriteBlock(NewBlock(int64(len(r1)+len(r2)), int64(len(r1)+len(r2)+len(r3)), r3)); err != nil {
 		t.Error(err)
 	}
 

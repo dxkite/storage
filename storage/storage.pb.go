@@ -4,12 +4,8 @@
 package storage
 
 import (
-	context "context"
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
-	grpc "google.golang.org/grpc"
-	codes "google.golang.org/grpc/codes"
-	status "google.golang.org/grpc/status"
 	math "math"
 )
 
@@ -49,7 +45,7 @@ func (x StorageResponse_Error) String() string {
 }
 
 func (StorageResponse_Error) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_0d2c4ccf1453ffdb, []int{4, 0}
+	return fileDescriptor_0d2c4ccf1453ffdb, []int{6, 0}
 }
 
 type DataBlock_Type int32
@@ -74,7 +70,7 @@ func (x DataBlock_Type) String() string {
 }
 
 func (DataBlock_Type) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_0d2c4ccf1453ffdb, []int{6, 0}
+	return fileDescriptor_0d2c4ccf1453ffdb, []int{8, 0}
 }
 
 type DataBlock_Encode int32
@@ -99,7 +95,7 @@ func (x DataBlock_Encode) String() string {
 }
 
 func (DataBlock_Encode) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_0d2c4ccf1453ffdb, []int{6, 1}
+	return fileDescriptor_0d2c4ccf1453ffdb, []int{8, 1}
 }
 
 type HelloRequest struct {
@@ -135,8 +131,8 @@ var xxx_messageInfo_HelloRequest proto.InternalMessageInfo
 
 type StatusResponse struct {
 	Version              string   `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
-	Size                 uint64   `protobuf:"varint,2,opt,name=size,proto3" json:"size,omitempty"`
-	Block                uint64   `protobuf:"varint,3,opt,name=block,proto3" json:"block,omitempty"`
+	Size                 int64    `protobuf:"varint,2,opt,name=size,proto3" json:"size,omitempty"`
+	Block                int64    `protobuf:"varint,3,opt,name=block,proto3" json:"block,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -174,14 +170,14 @@ func (m *StatusResponse) GetVersion() string {
 	return ""
 }
 
-func (m *StatusResponse) GetSize() uint64 {
+func (m *StatusResponse) GetSize() int64 {
 	if m != nil {
 		return m.Size
 	}
 	return 0
 }
 
-func (m *StatusResponse) GetBlock() uint64 {
+func (m *StatusResponse) GetBlock() int64 {
 	if m != nil {
 		return m.Block
 	}
@@ -189,8 +185,8 @@ func (m *StatusResponse) GetBlock() uint64 {
 }
 
 type ContentRange struct {
-	Start                uint64   `protobuf:"varint,1,opt,name=start,proto3" json:"start,omitempty"`
-	End                  uint64   `protobuf:"varint,2,opt,name=end,proto3" json:"end,omitempty"`
+	Start                int64    `protobuf:"varint,1,opt,name=start,proto3" json:"start,omitempty"`
+	End                  int64    `protobuf:"varint,2,opt,name=end,proto3" json:"end,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -221,87 +217,181 @@ func (m *ContentRange) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_ContentRange proto.InternalMessageInfo
 
-func (m *ContentRange) GetStart() uint64 {
+func (m *ContentRange) GetStart() int64 {
 	if m != nil {
 		return m.Start
 	}
 	return 0
 }
 
-func (m *ContentRange) GetEnd() uint64 {
+func (m *ContentRange) GetEnd() int64 {
 	if m != nil {
 		return m.End
 	}
 	return 0
 }
 
-type StorageRequest struct {
-	Hash                 []byte        `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
-	DataHash             []byte        `protobuf:"bytes,2,opt,name=dataHash,proto3" json:"dataHash,omitempty"`
-	Data                 []byte        `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`
-	Size                 uint64        `protobuf:"varint,4,opt,name=size,proto3" json:"size,omitempty"`
-	Range                *ContentRange `protobuf:"bytes,5,opt,name=range,proto3" json:"range,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
-	XXX_unrecognized     []byte        `json:"-"`
-	XXX_sizecache        int32         `json:"-"`
+type StorageCreateRequest struct {
+	Hash                 []byte   `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
+	Size                 int64    `protobuf:"varint,2,opt,name=size,proto3" json:"size,omitempty"`
+	Name                 string   `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *StorageRequest) Reset()         { *m = StorageRequest{} }
-func (m *StorageRequest) String() string { return proto.CompactTextString(m) }
-func (*StorageRequest) ProtoMessage()    {}
-func (*StorageRequest) Descriptor() ([]byte, []int) {
+func (m *StorageCreateRequest) Reset()         { *m = StorageCreateRequest{} }
+func (m *StorageCreateRequest) String() string { return proto.CompactTextString(m) }
+func (*StorageCreateRequest) ProtoMessage()    {}
+func (*StorageCreateRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_0d2c4ccf1453ffdb, []int{3}
 }
 
-func (m *StorageRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_StorageRequest.Unmarshal(m, b)
+func (m *StorageCreateRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_StorageCreateRequest.Unmarshal(m, b)
 }
-func (m *StorageRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_StorageRequest.Marshal(b, m, deterministic)
+func (m *StorageCreateRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_StorageCreateRequest.Marshal(b, m, deterministic)
 }
-func (m *StorageRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_StorageRequest.Merge(m, src)
+func (m *StorageCreateRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_StorageCreateRequest.Merge(m, src)
 }
-func (m *StorageRequest) XXX_Size() int {
-	return xxx_messageInfo_StorageRequest.Size(m)
+func (m *StorageCreateRequest) XXX_Size() int {
+	return xxx_messageInfo_StorageCreateRequest.Size(m)
 }
-func (m *StorageRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_StorageRequest.DiscardUnknown(m)
+func (m *StorageCreateRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_StorageCreateRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_StorageRequest proto.InternalMessageInfo
+var xxx_messageInfo_StorageCreateRequest proto.InternalMessageInfo
 
-func (m *StorageRequest) GetHash() []byte {
+func (m *StorageCreateRequest) GetHash() []byte {
 	if m != nil {
 		return m.Hash
 	}
 	return nil
 }
 
-func (m *StorageRequest) GetDataHash() []byte {
-	if m != nil {
-		return m.DataHash
-	}
-	return nil
-}
-
-func (m *StorageRequest) GetData() []byte {
-	if m != nil {
-		return m.Data
-	}
-	return nil
-}
-
-func (m *StorageRequest) GetSize() uint64 {
+func (m *StorageCreateRequest) GetSize() int64 {
 	if m != nil {
 		return m.Size
 	}
 	return 0
 }
 
-func (m *StorageRequest) GetRange() *ContentRange {
+func (m *StorageCreateRequest) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+type StorageStoreRequest struct {
+	Hash                 []byte        `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
+	DataHash             []byte        `protobuf:"bytes,2,opt,name=dataHash,proto3" json:"dataHash,omitempty"`
+	Data                 []byte        `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`
+	Size                 int64         `protobuf:"varint,4,opt,name=size,proto3" json:"size,omitempty"`
+	Range                *ContentRange `protobuf:"bytes,5,opt,name=range,proto3" json:"range,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
+	XXX_unrecognized     []byte        `json:"-"`
+	XXX_sizecache        int32         `json:"-"`
+}
+
+func (m *StorageStoreRequest) Reset()         { *m = StorageStoreRequest{} }
+func (m *StorageStoreRequest) String() string { return proto.CompactTextString(m) }
+func (*StorageStoreRequest) ProtoMessage()    {}
+func (*StorageStoreRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_0d2c4ccf1453ffdb, []int{4}
+}
+
+func (m *StorageStoreRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_StorageStoreRequest.Unmarshal(m, b)
+}
+func (m *StorageStoreRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_StorageStoreRequest.Marshal(b, m, deterministic)
+}
+func (m *StorageStoreRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_StorageStoreRequest.Merge(m, src)
+}
+func (m *StorageStoreRequest) XXX_Size() int {
+	return xxx_messageInfo_StorageStoreRequest.Size(m)
+}
+func (m *StorageStoreRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_StorageStoreRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_StorageStoreRequest proto.InternalMessageInfo
+
+func (m *StorageStoreRequest) GetHash() []byte {
+	if m != nil {
+		return m.Hash
+	}
+	return nil
+}
+
+func (m *StorageStoreRequest) GetDataHash() []byte {
+	if m != nil {
+		return m.DataHash
+	}
+	return nil
+}
+
+func (m *StorageStoreRequest) GetData() []byte {
+	if m != nil {
+		return m.Data
+	}
+	return nil
+}
+
+func (m *StorageStoreRequest) GetSize() int64 {
+	if m != nil {
+		return m.Size
+	}
+	return 0
+}
+
+func (m *StorageStoreRequest) GetRange() *ContentRange {
 	if m != nil {
 		return m.Range
+	}
+	return nil
+}
+
+type StorageFinishRequest struct {
+	Hash                 []byte   `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *StorageFinishRequest) Reset()         { *m = StorageFinishRequest{} }
+func (m *StorageFinishRequest) String() string { return proto.CompactTextString(m) }
+func (*StorageFinishRequest) ProtoMessage()    {}
+func (*StorageFinishRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_0d2c4ccf1453ffdb, []int{5}
+}
+
+func (m *StorageFinishRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_StorageFinishRequest.Unmarshal(m, b)
+}
+func (m *StorageFinishRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_StorageFinishRequest.Marshal(b, m, deterministic)
+}
+func (m *StorageFinishRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_StorageFinishRequest.Merge(m, src)
+}
+func (m *StorageFinishRequest) XXX_Size() int {
+	return xxx_messageInfo_StorageFinishRequest.Size(m)
+}
+func (m *StorageFinishRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_StorageFinishRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_StorageFinishRequest proto.InternalMessageInfo
+
+func (m *StorageFinishRequest) GetHash() []byte {
+	if m != nil {
+		return m.Hash
 	}
 	return nil
 }
@@ -318,7 +408,7 @@ func (m *StorageResponse) Reset()         { *m = StorageResponse{} }
 func (m *StorageResponse) String() string { return proto.CompactTextString(m) }
 func (*StorageResponse) ProtoMessage()    {}
 func (*StorageResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0d2c4ccf1453ffdb, []int{4}
+	return fileDescriptor_0d2c4ccf1453ffdb, []int{6}
 }
 
 func (m *StorageResponse) XXX_Unmarshal(b []byte) error {
@@ -364,7 +454,7 @@ func (m *GetResponse) Reset()         { *m = GetResponse{} }
 func (m *GetResponse) String() string { return proto.CompactTextString(m) }
 func (*GetResponse) ProtoMessage()    {}
 func (*GetResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0d2c4ccf1453ffdb, []int{5}
+	return fileDescriptor_0d2c4ccf1453ffdb, []int{7}
 }
 
 func (m *GetResponse) XXX_Unmarshal(b []byte) error {
@@ -407,7 +497,7 @@ func (m *DataBlock) Reset()         { *m = DataBlock{} }
 func (m *DataBlock) String() string { return proto.CompactTextString(m) }
 func (*DataBlock) ProtoMessage()    {}
 func (*DataBlock) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0d2c4ccf1453ffdb, []int{6}
+	return fileDescriptor_0d2c4ccf1453ffdb, []int{8}
 }
 
 func (m *DataBlock) XXX_Unmarshal(b []byte) error {
@@ -475,7 +565,7 @@ func (m *DataResponse) Reset()         { *m = DataResponse{} }
 func (m *DataResponse) String() string { return proto.CompactTextString(m) }
 func (*DataResponse) ProtoMessage()    {}
 func (*DataResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0d2c4ccf1453ffdb, []int{7}
+	return fileDescriptor_0d2c4ccf1453ffdb, []int{9}
 }
 
 func (m *DataResponse) XXX_Unmarshal(b []byte) error {
@@ -517,7 +607,9 @@ func init() {
 	proto.RegisterType((*HelloRequest)(nil), "HelloRequest")
 	proto.RegisterType((*StatusResponse)(nil), "StatusResponse")
 	proto.RegisterType((*ContentRange)(nil), "ContentRange")
-	proto.RegisterType((*StorageRequest)(nil), "StorageRequest")
+	proto.RegisterType((*StorageCreateRequest)(nil), "StorageCreateRequest")
+	proto.RegisterType((*StorageStoreRequest)(nil), "StorageStoreRequest")
+	proto.RegisterType((*StorageFinishRequest)(nil), "StorageFinishRequest")
 	proto.RegisterType((*StorageResponse)(nil), "StorageResponse")
 	proto.RegisterType((*GetResponse)(nil), "GetResponse")
 	proto.RegisterType((*DataBlock)(nil), "DataBlock")
@@ -529,195 +621,41 @@ func init() {
 }
 
 var fileDescriptor_0d2c4ccf1453ffdb = []byte{
-	// 512 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x93, 0xdd, 0x4e, 0xdb, 0x30,
-	0x14, 0xc7, 0xeb, 0x26, 0x29, 0xf4, 0xf4, 0x2b, 0x58, 0x13, 0x8a, 0x98, 0x26, 0x75, 0xe6, 0x62,
-	0x65, 0x17, 0xb9, 0xe8, 0xa4, 0xdd, 0x17, 0x96, 0x15, 0xc4, 0x68, 0xa5, 0xd3, 0xa2, 0x5d, 0x22,
-	0x43, 0xad, 0x82, 0xd6, 0xc5, 0x5d, 0x6c, 0x90, 0xd8, 0x2b, 0x4c, 0x7b, 0x82, 0xbd, 0xde, 0x1e,
-	0x64, 0xf2, 0x49, 0x08, 0x61, 0xeb, 0xb8, 0x3b, 0x1f, 0xff, 0x1c, 0xff, 0xf3, 0xb3, 0x0f, 0x74,
-	0x8c, 0xd5, 0x99, 0x5c, 0xaa, 0x78, 0x9d, 0x69, 0xab, 0x45, 0x17, 0xda, 0xc7, 0x6a, 0xb5, 0xd2,
-	0xa8, 0xbe, 0xdd, 0x2a, 0x63, 0xc5, 0x1c, 0xba, 0x33, 0x2b, 0xed, 0xad, 0x41, 0x65, 0xd6, 0x3a,
-	0x35, 0x8a, 0x47, 0xb0, 0x75, 0xa7, 0x32, 0x73, 0xa3, 0xd3, 0x88, 0xf5, 0xd9, 0xa0, 0x89, 0x0f,
-	0x29, 0xe7, 0xe0, 0x9b, 0x9b, 0xef, 0x2a, 0xaa, 0xf7, 0xd9, 0xc0, 0x47, 0x8a, 0xf9, 0x0b, 0x08,
-	0x2e, 0x57, 0xfa, 0xea, 0x4b, 0xe4, 0x51, 0x31, 0x4f, 0xc4, 0x7b, 0x68, 0x1f, 0xe9, 0xd4, 0xaa,
-	0xd4, 0xa2, 0x4c, 0x97, 0xa4, 0x32, 0x56, 0x66, 0x96, 0x26, 0xfa, 0x98, 0x27, 0x3c, 0x04, 0x4f,
-	0xa5, 0x8b, 0x62, 0x9c, 0x0b, 0xc5, 0x4f, 0xe6, 0xec, 0x90, 0xdf, 0xc2, 0xa0, 0x3b, 0xf4, 0x5a,
-	0x9a, 0x6b, 0xfa, 0xb2, 0x8d, 0x14, 0xf3, 0x3d, 0xd8, 0x5e, 0x48, 0x2b, 0x8f, 0x5d, 0xbd, 0x4e,
-	0xf5, 0x32, 0x77, 0x7a, 0x17, 0x93, 0x9f, 0x36, 0x52, 0x5c, 0x1a, 0xf7, 0x2b, 0xc6, 0xf7, 0x21,
-	0xc8, 0x9c, 0xb7, 0x28, 0xe8, 0xb3, 0x41, 0x6b, 0xd8, 0x89, 0xab, 0x86, 0x31, 0xef, 0x89, 0x5f,
-	0x0c, 0x7a, 0xa5, 0x9f, 0x82, 0xcf, 0x5b, 0xf0, 0xaf, 0xf4, 0x42, 0x91, 0xa1, 0xee, 0x70, 0x37,
-	0xfe, 0xab, 0x1f, 0x27, 0x59, 0xa6, 0x33, 0x24, 0x8d, 0x63, 0xf9, 0x55, 0x19, 0x23, 0x97, 0x39,
-	0xb4, 0x26, 0x3e, 0xa4, 0xe2, 0x10, 0x02, 0x12, 0xf2, 0x2e, 0x40, 0x82, 0x38, 0xc5, 0x8b, 0xc9,
-	0x74, 0x92, 0x84, 0x35, 0xbe, 0x03, 0x9d, 0x3c, 0x3f, 0x9f, 0x9c, 0x4e, 0xa6, 0x9f, 0x27, 0x21,
-	0xe3, 0xbb, 0xc0, 0xf3, 0xd2, 0xa7, 0xd1, 0xd1, 0xe9, 0xc5, 0x6c, 0x3e, 0xc5, 0xd1, 0x38, 0x09,
-	0xeb, 0xe2, 0x35, 0xb4, 0xc6, 0xca, 0x96, 0xc6, 0x36, 0x90, 0x12, 0xbf, 0x19, 0x34, 0x3f, 0x48,
-	0x2b, 0x0f, 0xdd, 0xb5, 0x6c, 0x64, 0xb9, 0x0f, 0xbe, 0xbd, 0x5f, 0xe7, 0xfe, 0xba, 0xc3, 0x5e,
-	0x5c, 0xaa, 0xe3, 0xf9, 0xfd, 0x5a, 0x21, 0x35, 0x1f, 0x61, 0x79, 0xff, 0x87, 0x55, 0x92, 0xf7,
-	0x2b, 0xe4, 0x0f, 0xa0, 0xa1, 0x52, 0xc2, 0x15, 0xd0, 0xfc, 0x9d, 0xca, 0xfc, 0x84, 0x1a, 0x58,
-	0x08, 0xc4, 0x4b, 0xf0, 0xdd, 0x89, 0x1c, 0xa0, 0x31, 0x9b, 0x63, 0x32, 0x3a, 0x0b, 0x6b, 0x7c,
-	0x0b, 0xbc, 0x73, 0x3c, 0x09, 0x99, 0x78, 0x05, 0x8d, 0x5c, 0xce, 0xb7, 0xc1, 0x2f, 0x48, 0x35,
-	0x21, 0x38, 0x39, 0x73, 0x24, 0x98, 0xf8, 0x08, 0x6d, 0x37, 0xf7, 0x39, 0x14, 0x5c, 0x40, 0x83,
-	0x1e, 0xa7, 0x89, 0xea, 0x7d, 0x6f, 0xd0, 0x1a, 0xc2, 0xa3, 0x15, 0x2c, 0x3a, 0xc3, 0x1f, 0x0c,
-	0x9a, 0x63, 0x5d, 0xdc, 0x28, 0x3f, 0x80, 0x80, 0x76, 0x85, 0x77, 0xe2, 0xea, 0xce, 0xec, 0xf5,
-	0xe2, 0xa7, 0x2b, 0x23, 0x6a, 0xee, 0x51, 0xcc, 0xe4, 0x9d, 0xe2, 0xbd, 0xf8, 0xe9, 0xf3, 0xdd,
-	0xa4, 0x7d, 0x03, 0xde, 0x58, 0xd9, 0x7f, 0xa5, 0x9d, 0xb8, 0xfa, 0x0f, 0xa2, 0x76, 0xd9, 0xa0,
-	0x95, 0x7d, 0xf7, 0x27, 0x00, 0x00, 0xff, 0xff, 0x82, 0x01, 0xe1, 0x2d, 0xc3, 0x03, 0x00, 0x00,
-}
-
-// Reference imports to suppress errors if they are not otherwise used.
-var _ context.Context
-var _ grpc.ClientConnInterface
-
-// This is a compile-time assertion to ensure that this generated file
-// is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion6
-
-// GoStorageClient is the client API for GoStorage service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type GoStorageClient interface {
-	// 获取状态
-	Hello(ctx context.Context, in *HelloRequest, opts ...grpc.CallOption) (*StatusResponse, error)
-	// 保存数据
-	Save(ctx context.Context, in *StorageRequest, opts ...grpc.CallOption) (*StatusResponse, error)
-	// 获取数据
-	Get(ctx context.Context, in *StorageRequest, opts ...grpc.CallOption) (*DataResponse, error)
-}
-
-type goStorageClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewGoStorageClient(cc grpc.ClientConnInterface) GoStorageClient {
-	return &goStorageClient{cc}
-}
-
-func (c *goStorageClient) Hello(ctx context.Context, in *HelloRequest, opts ...grpc.CallOption) (*StatusResponse, error) {
-	out := new(StatusResponse)
-	err := c.cc.Invoke(ctx, "/GoStorage/Hello", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *goStorageClient) Save(ctx context.Context, in *StorageRequest, opts ...grpc.CallOption) (*StatusResponse, error) {
-	out := new(StatusResponse)
-	err := c.cc.Invoke(ctx, "/GoStorage/Save", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *goStorageClient) Get(ctx context.Context, in *StorageRequest, opts ...grpc.CallOption) (*DataResponse, error) {
-	out := new(DataResponse)
-	err := c.cc.Invoke(ctx, "/GoStorage/Get", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// GoStorageServer is the server API for GoStorage service.
-type GoStorageServer interface {
-	// 获取状态
-	Hello(context.Context, *HelloRequest) (*StatusResponse, error)
-	// 保存数据
-	Save(context.Context, *StorageRequest) (*StatusResponse, error)
-	// 获取数据
-	Get(context.Context, *StorageRequest) (*DataResponse, error)
-}
-
-// UnimplementedGoStorageServer can be embedded to have forward compatible implementations.
-type UnimplementedGoStorageServer struct {
-}
-
-func (*UnimplementedGoStorageServer) Hello(ctx context.Context, req *HelloRequest) (*StatusResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Hello not implemented")
-}
-func (*UnimplementedGoStorageServer) Save(ctx context.Context, req *StorageRequest) (*StatusResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Save not implemented")
-}
-func (*UnimplementedGoStorageServer) Get(ctx context.Context, req *StorageRequest) (*DataResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
-}
-
-func RegisterGoStorageServer(s *grpc.Server, srv GoStorageServer) {
-	s.RegisterService(&_GoStorage_serviceDesc, srv)
-}
-
-func _GoStorage_Hello_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(HelloRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GoStorageServer).Hello(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/GoStorage/Hello",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GoStorageServer).Hello(ctx, req.(*HelloRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _GoStorage_Save_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StorageRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GoStorageServer).Save(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/GoStorage/Save",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GoStorageServer).Save(ctx, req.(*StorageRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _GoStorage_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StorageRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GoStorageServer).Get(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/GoStorage/Get",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GoStorageServer).Get(ctx, req.(*StorageRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-var _GoStorage_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "GoStorage",
-	HandlerType: (*GoStorageServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "Hello",
-			Handler:    _GoStorage_Hello_Handler,
-		},
-		{
-			MethodName: "Save",
-			Handler:    _GoStorage_Save_Handler,
-		},
-		{
-			MethodName: "Get",
-			Handler:    _GoStorage_Get_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "storage.proto",
+	// 567 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x54, 0x4d, 0x4f, 0xdb, 0x40,
+	0x10, 0x8d, 0xe3, 0x0f, 0xc8, 0xe0, 0x04, 0xb3, 0xa5, 0xc8, 0x4a, 0x55, 0x29, 0x5d, 0x7a, 0x08,
+	0x1c, 0x2c, 0xd5, 0x95, 0x7a, 0x0f, 0xa9, 0x09, 0x88, 0x92, 0x48, 0x9b, 0xa0, 0x1e, 0xd1, 0x42,
+	0x56, 0x49, 0xd4, 0x60, 0xa7, 0xde, 0xa5, 0x12, 0xfd, 0x19, 0xbd, 0xf6, 0xef, 0xf5, 0x2f, 0xf4,
+	0x5e, 0xed, 0xac, 0x31, 0x6e, 0x95, 0x46, 0xe2, 0x94, 0x99, 0x9d, 0x37, 0xcf, 0x6f, 0xdf, 0xec,
+	0x04, 0x9a, 0x52, 0x65, 0x39, 0x9f, 0x89, 0x68, 0x95, 0x67, 0x2a, 0xa3, 0x2d, 0xf0, 0xcf, 0xc4,
+	0x72, 0x99, 0x31, 0xf1, 0xf5, 0x5e, 0x48, 0x45, 0x27, 0xd0, 0x1a, 0x2b, 0xae, 0xee, 0x25, 0x13,
+	0x72, 0x95, 0xa5, 0x52, 0x90, 0x10, 0xb6, 0xbe, 0x89, 0x5c, 0x2e, 0xb2, 0x34, 0xb4, 0x3a, 0x56,
+	0xb7, 0xc1, 0x1e, 0x53, 0x42, 0xc0, 0x91, 0x8b, 0xef, 0x22, 0xac, 0x77, 0xac, 0xae, 0xcd, 0x30,
+	0x26, 0xfb, 0xe0, 0xde, 0x2c, 0xb3, 0xdb, 0x2f, 0xa1, 0x8d, 0x87, 0x26, 0xa1, 0x1f, 0xc0, 0xef,
+	0x67, 0xa9, 0x12, 0xa9, 0x62, 0x3c, 0x9d, 0x21, 0x4a, 0x2a, 0x9e, 0x2b, 0x64, 0xb4, 0x99, 0x49,
+	0x48, 0x00, 0xb6, 0x48, 0xa7, 0x05, 0x9d, 0x0e, 0x29, 0x83, 0xfd, 0xb1, 0x91, 0xdb, 0xcf, 0x05,
+	0x57, 0xa2, 0x50, 0xa9, 0xbf, 0x3c, 0xe7, 0x72, 0x8e, 0xed, 0x3e, 0xc3, 0x78, 0xad, 0x1a, 0x02,
+	0x4e, 0xca, 0xef, 0x04, 0x8a, 0x69, 0x30, 0x8c, 0xe9, 0x0f, 0x0b, 0x5e, 0x14, 0xa4, 0xfa, 0x67,
+	0x23, 0x67, 0x1b, 0xb6, 0xa7, 0x5c, 0xf1, 0x33, 0x7d, 0x5e, 0xc7, 0xf3, 0x32, 0xd7, 0x78, 0x1d,
+	0x23, 0xb7, 0xcf, 0x30, 0x2e, 0x35, 0x38, 0x15, 0x0d, 0x87, 0xe0, 0xe6, 0xfa, 0xd2, 0xa1, 0xdb,
+	0xb1, 0xba, 0x3b, 0x71, 0x33, 0xaa, 0x3a, 0xc1, 0x4c, 0x8d, 0x1e, 0x97, 0x17, 0x3d, 0x5d, 0xa4,
+	0x0b, 0x39, 0xdf, 0x20, 0x8a, 0xfe, 0xb4, 0x60, 0xb7, 0x00, 0x97, 0x43, 0x3a, 0x06, 0xe7, 0x36,
+	0x9b, 0x0a, 0xc4, 0xb5, 0xe2, 0x83, 0xe8, 0x9f, 0x7a, 0x94, 0xe4, 0x79, 0x96, 0x33, 0xc4, 0xe8,
+	0x81, 0xde, 0x09, 0x29, 0xf9, 0xcc, 0x78, 0xd5, 0x60, 0x8f, 0x29, 0x3d, 0x01, 0x17, 0x81, 0xa4,
+	0x05, 0x90, 0x30, 0x36, 0x62, 0xd7, 0xc3, 0xd1, 0x30, 0x09, 0x6a, 0x64, 0x0f, 0x9a, 0x26, 0xbf,
+	0x1a, 0x5e, 0x0c, 0x47, 0x9f, 0x87, 0x81, 0x45, 0x0e, 0x80, 0x98, 0xa3, 0x4f, 0xbd, 0xfe, 0xc5,
+	0xf5, 0x78, 0x32, 0x62, 0xbd, 0x41, 0x12, 0xd4, 0xe9, 0x1b, 0xd8, 0x19, 0x08, 0x55, 0x0a, 0x5b,
+	0x77, 0x81, 0x5f, 0x16, 0x34, 0x3e, 0x72, 0xc5, 0x4f, 0xf4, 0xdb, 0x58, 0xeb, 0xfb, 0x21, 0x38,
+	0xea, 0x61, 0x65, 0xf4, 0xb5, 0xe2, 0xdd, 0xa8, 0x44, 0x47, 0x93, 0x87, 0x95, 0x60, 0x58, 0x7c,
+	0x32, 0xd6, 0xfe, 0xbf, 0xb1, 0xe5, 0x94, 0x9c, 0xca, 0x94, 0x8e, 0xc0, 0x13, 0x29, 0xda, 0xe5,
+	0x22, 0xff, 0x5e, 0x85, 0x3f, 0xc1, 0x02, 0x2b, 0x00, 0xf4, 0x15, 0x38, 0xfa, 0x8b, 0x04, 0xc0,
+	0x1b, 0x4f, 0x58, 0xd2, 0xbb, 0x0c, 0x6a, 0x64, 0x0b, 0xec, 0x2b, 0x76, 0x1e, 0x58, 0xf4, 0x35,
+	0x78, 0x06, 0x4e, 0xb6, 0xc1, 0x29, 0x9c, 0x6a, 0x80, 0x7b, 0x7e, 0xa9, 0x9d, 0xb0, 0xe8, 0x29,
+	0xf8, 0x9a, 0x77, 0x93, 0x15, 0x84, 0x82, 0x87, 0x1b, 0x22, 0xc3, 0x7a, 0xc7, 0xee, 0xee, 0xc4,
+	0xf0, 0x24, 0x85, 0x15, 0x95, 0xf8, 0xb7, 0x05, 0x5b, 0xc5, 0x3c, 0xc9, 0x11, 0xb8, 0xb8, 0xae,
+	0xa4, 0x19, 0x55, 0xd7, 0xb6, 0xbd, 0x1b, 0xfd, 0xbd, 0xb5, 0xb4, 0x46, 0x62, 0xf0, 0xcc, 0xd2,
+	0x90, 0x97, 0xd1, 0xba, 0x25, 0x5a, 0xd7, 0xf3, 0x0e, 0x5c, 0xdc, 0x89, 0x67, 0xb4, 0xc4, 0xe0,
+	0x99, 0x27, 0xfb, 0x8c, 0x9e, 0xb7, 0x60, 0x0f, 0x84, 0x22, 0x7e, 0x54, 0x79, 0x29, 0xed, 0x66,
+	0x54, 0x75, 0x8b, 0xd6, 0x6e, 0x3c, 0xfc, 0x87, 0x7a, 0xff, 0x27, 0x00, 0x00, 0xff, 0xff, 0xf2,
+	0xe7, 0xd4, 0xf6, 0xb2, 0x04, 0x00, 0x00,
 }
