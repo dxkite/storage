@@ -11,7 +11,7 @@ func NewDataResponse(m *meta.MetaInfo) *storage.DataResponse {
 	}
 	r := &storage.DataResponse{
 		Hash:   m.Hash,
-		Block:  int64(len(m.Block)),
+		Block:  m.BlockSize,
 		Size:   m.Size,
 		Type:   storage.DataResponse_URI,
 		Encode: storage.DataResponse_IMAGE,

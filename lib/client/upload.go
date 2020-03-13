@@ -2,10 +2,8 @@ package client
 
 import (
 	"context"
-	"crypto/sha1"
 	"dxkite.cn/go-storage/storage"
 	"errors"
-	"fmt"
 	"google.golang.org/grpc"
 	"io"
 	"log"
@@ -58,29 +56,6 @@ func UploadFile(remote, name string, file io.ReadSeeker) error {
 	}
 	log.Println("finished")
 	return nil
-}
-
-func SteamHash(r io.ReadSeeker) []byte {
-	h := sha1.New()
-	_, _ = r.Seek(0, io.SeekStart)
-	_, err := io.Copy(h, r)
-	if err != nil {
-		panic(fmt.Sprintf("check sum: %v", err))
-	}
-	_, _ = r.Seek(0, io.SeekStart)
-	return h.Sum(nil)
-}
-
-func ByteHash(b []byte) []byte {
-	h := sha1.New()
-	h.Write(b)
-	return h.Sum(nil)
-}
-
-func SteamSize(r io.ReadSeeker) int64 {
-	n, _ := r.Seek(0, io.SeekEnd)
-	_, _ = r.Seek(0, io.SeekStart)
-	return n
 }
 
 func SendCreate(c storage.GoStorageClient, ctx context.Context, name string, info []byte, size int64) error {

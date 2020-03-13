@@ -7,8 +7,8 @@ import (
 )
 
 func main() {
-	f, _ := os.OpenFile("./data/example-2.gif", os.O_RDONLY, os.ModePerm)
-	if er := client.UploadFile("127.0.0.1:8080", "example-2.gif", f); er != nil {
+	f, _ := os.OpenFile("./data/陈奕迅 - 十年.mp3", os.O_RDONLY, os.ModePerm)
+	if er := client.UploadFile("127.0.0.1:8080", "陈奕迅 - 十年.mp3", f); er != nil {
 		log.Fatal("upload error:", er)
 	}
 }

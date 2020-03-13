@@ -52,13 +52,14 @@ func (s *GoStorageServer) Create(ctx context.Context, req *storage.StorageCreate
 	}
 
 	m := meta.MetaInfo{
-		Hash:   req.Info,
-		Name:   req.Name,
-		Status: meta.Create,
-		Size:   req.Size,
-		Type:   int32(storage.DataResponse_URI),
-		Encode: int32(storage.DataResponse_IMAGE),
-		Block:  nil,
+		Hash:      req.Info,
+		Name:      req.Name,
+		Status:    meta.Create,
+		Size:      req.Size,
+		Type:      int32(storage.DataResponse_URI),
+		Encode:    int32(storage.DataResponse_IMAGE),
+		Block:     nil,
+		BlockSize: s.BlockSize,
 	}
 
 	f := path.Join(s.Root, fmt.Sprintf("%x.meta", req.Info))
@@ -199,7 +200,7 @@ func (s *GoStorageServer) Get(ctx context.Context, req *storage.GetResponse) (*s
 	f := path.Join(s.Root, fmt.Sprintf("%x.meta", req.Info))
 	m, e := meta.DecodeToFile(f)
 	if e != nil && e == os.ErrNotExist {
-		return nil, errors.New("file " + hex.Dump(req.Info) + " not found")
+		return nil, errors.New("file " + fmt.Sprintf("%x.meta", req.Info) + " not found")
 	}
 	if e != nil {
 		return nil, e

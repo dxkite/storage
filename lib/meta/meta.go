@@ -12,13 +12,14 @@ const (
 )
 
 type MetaInfo struct {
-	Status int
-	Hash   []byte
-	Name   string
-	Size   int64
-	Encode int32
-	Type   int32
-	Block  []DataBlock
+	Status    int
+	Hash      []byte
+	Name      string
+	Size      int64
+	BlockSize int64
+	Encode    int32
+	Type      int32
+	Block     []DataBlock
 }
 
 type DataBlock struct {
