@@ -46,7 +46,6 @@ func EncodeToFile(path string, info *MetaInfo) error {
 	if er != nil {
 		return er
 	}
-	_ = f.Truncate(0)
 	b := gob.NewEncoder(f)
 	return b.Encode(info)
 }
