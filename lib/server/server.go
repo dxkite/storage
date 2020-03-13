@@ -8,6 +8,8 @@ import (
 	"dxkite.cn/go-storage/upload"
 	"encoding/hex"
 	"errors"
+	"fmt"
+	"log"
 	"os"
 	"path"
 )
@@ -59,7 +61,9 @@ func (s *GoStorageServer) Create(ctx context.Context, req *storage.StorageCreate
 		Block:  nil,
 	}
 
-	f := path.Join(s.Root, hex.Dump(req.Info)+".meta")
+	f := path.Join(s.Root, fmt.Sprintf("%x.meta", req.Info))
+	log.Printf("create meta %s\n", f)
+
 	e := meta.EncodeToFile(f, &m)
 	if e != nil {
 		return &storage.StorageResponse{
@@ -90,7 +94,7 @@ func (s *GoStorageServer) Store(ctx context.Context, req *storage.StorageStoreRe
 		}, nil
 	}
 
-	f := path.Join(s.Root, hex.Dump(req.Info)+".meta")
+	f := path.Join(s.Root, fmt.Sprintf("%x.meta", req.Info))
 	m, e := meta.DecodeToFile(f)
 	if e != nil && e == os.ErrNotExist {
 		return &storage.StorageResponse{
@@ -105,7 +109,7 @@ func (s *GoStorageServer) Store(ctx context.Context, req *storage.StorageStoreRe
 			Message: e.Error(),
 		}, nil
 	}
-
+	log.Printf("store meta %s index %d\n", f, req.Index)
 	// 编码成图片
 	b, eer := encoding.EncodeByte(req.Data)
 	if eer != nil {
@@ -114,7 +118,7 @@ func (s *GoStorageServer) Store(ctx context.Context, req *storage.StorageStoreRe
 			Message: eer.Error(),
 		}, nil
 	}
-
+	log.Println("uploading")
 	// 上传到阿里云
 	rt, uer := upload.Upload("ali", &upload.FileObject{
 		Name: hex.Dump(req.Hash) + ".png",
@@ -127,7 +131,7 @@ func (s *GoStorageServer) Store(ctx context.Context, req *storage.StorageStoreRe
 			Message: uer.Error(),
 		}, nil
 	}
-
+	log.Println("uploaded to cloud")
 	m.Status = meta.Uploading
 	m.AppendBlock(&meta.DataBlock{
 		Hash:  req.Hash,
@@ -142,7 +146,7 @@ func (s *GoStorageServer) Store(ctx context.Context, req *storage.StorageStoreRe
 			Message: e.Error(),
 		}, nil
 	}
-
+	log.Println("restore meta")
 	return &storage.StorageResponse{
 		Code:    storage.StorageResponse_ERROR_NONE,
 		Message: "block upload success",
@@ -157,7 +161,7 @@ func (s *GoStorageServer) Finish(ctx context.Context, req *storage.StorageFinish
 		}, nil
 	}
 
-	f := path.Join(s.Root, hex.Dump(req.Info)+".meta")
+	f := path.Join(s.Root, fmt.Sprintf("%x.meta", req.Info))
 	m, e := meta.DecodeToFile(f)
 	if e != nil && e == os.ErrNotExist {
 		return &storage.StorageResponse{
@@ -174,7 +178,6 @@ func (s *GoStorageServer) Finish(ctx context.Context, req *storage.StorageFinish
 	}
 
 	m.Status = meta.Finish
-
 	e = meta.EncodeToFile(f, m)
 	if e != nil {
 		return &storage.StorageResponse{
@@ -182,7 +185,7 @@ func (s *GoStorageServer) Finish(ctx context.Context, req *storage.StorageFinish
 			Message: e.Error(),
 		}, nil
 	}
-
+	log.Printf("finish meta %s\n", f)
 	return &storage.StorageResponse{
 		Code:    storage.StorageResponse_ERROR_NONE,
 		Message: "finish upload",
@@ -193,7 +196,7 @@ func (s *GoStorageServer) Get(ctx context.Context, req *storage.GetResponse) (*s
 	if len(req.Info) != 20 {
 		return nil, nil
 	}
-	f := path.Join(s.Root, hex.Dump(req.Info)+".meta")
+	f := path.Join(s.Root, fmt.Sprintf("%x.meta", req.Info))
 	m, e := meta.DecodeToFile(f)
 	if e != nil && e == os.ErrNotExist {
 		return nil, errors.New("file " + hex.Dump(req.Info) + " not found")

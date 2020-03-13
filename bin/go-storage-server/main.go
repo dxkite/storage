@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	s := server.New("./data", 2048)
+	s := server.New("./data", 2*1024*1024)
 	lis, err := net.Listen("tcp", ":8080")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
