@@ -4,8 +4,12 @@
 package storage
 
 import (
+	context "context"
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
+	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 	math "math"
 )
 
@@ -45,7 +49,7 @@ func (x StorageResponse_Error) String() string {
 }
 
 func (StorageResponse_Error) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_0d2c4ccf1453ffdb, []int{6, 0}
+	return fileDescriptor_0d2c4ccf1453ffdb, []int{5, 0}
 }
 
 type DataBlock_Type int32
@@ -70,66 +74,66 @@ func (x DataBlock_Type) String() string {
 }
 
 func (DataBlock_Type) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_0d2c4ccf1453ffdb, []int{8, 0}
+	return fileDescriptor_0d2c4ccf1453ffdb, []int{7, 0}
 }
 
-type DataBlock_Encode int32
+type DataResponse_Encode int32
 
 const (
-	DataBlock_NONE  DataBlock_Encode = 0
-	DataBlock_IMAGE DataBlock_Encode = 1
+	DataResponse_NONE  DataResponse_Encode = 0
+	DataResponse_IMAGE DataResponse_Encode = 1
 )
 
-var DataBlock_Encode_name = map[int32]string{
+var DataResponse_Encode_name = map[int32]string{
 	0: "NONE",
 	1: "IMAGE",
 }
 
-var DataBlock_Encode_value = map[string]int32{
+var DataResponse_Encode_value = map[string]int32{
 	"NONE":  0,
 	"IMAGE": 1,
 }
 
-func (x DataBlock_Encode) String() string {
-	return proto.EnumName(DataBlock_Encode_name, int32(x))
+func (x DataResponse_Encode) String() string {
+	return proto.EnumName(DataResponse_Encode_name, int32(x))
 }
 
-func (DataBlock_Encode) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_0d2c4ccf1453ffdb, []int{8, 1}
+func (DataResponse_Encode) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_0d2c4ccf1453ffdb, []int{8, 0}
 }
 
-type HelloRequest struct {
+type PingRequest struct {
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *HelloRequest) Reset()         { *m = HelloRequest{} }
-func (m *HelloRequest) String() string { return proto.CompactTextString(m) }
-func (*HelloRequest) ProtoMessage()    {}
-func (*HelloRequest) Descriptor() ([]byte, []int) {
+func (m *PingRequest) Reset()         { *m = PingRequest{} }
+func (m *PingRequest) String() string { return proto.CompactTextString(m) }
+func (*PingRequest) ProtoMessage()    {}
+func (*PingRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_0d2c4ccf1453ffdb, []int{0}
 }
 
-func (m *HelloRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_HelloRequest.Unmarshal(m, b)
+func (m *PingRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PingRequest.Unmarshal(m, b)
 }
-func (m *HelloRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_HelloRequest.Marshal(b, m, deterministic)
+func (m *PingRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PingRequest.Marshal(b, m, deterministic)
 }
-func (m *HelloRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_HelloRequest.Merge(m, src)
+func (m *PingRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PingRequest.Merge(m, src)
 }
-func (m *HelloRequest) XXX_Size() int {
-	return xxx_messageInfo_HelloRequest.Size(m)
+func (m *PingRequest) XXX_Size() int {
+	return xxx_messageInfo_PingRequest.Size(m)
 }
-func (m *HelloRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_HelloRequest.DiscardUnknown(m)
+func (m *PingRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_PingRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_HelloRequest proto.InternalMessageInfo
+var xxx_messageInfo_PingRequest proto.InternalMessageInfo
 
-type StatusResponse struct {
+type PongResponse struct {
 	Version              string   `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
 	Size                 int64    `protobuf:"varint,2,opt,name=size,proto3" json:"size,omitempty"`
 	Block                int64    `protobuf:"varint,3,opt,name=block,proto3" json:"block,omitempty"`
@@ -138,95 +142,48 @@ type StatusResponse struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *StatusResponse) Reset()         { *m = StatusResponse{} }
-func (m *StatusResponse) String() string { return proto.CompactTextString(m) }
-func (*StatusResponse) ProtoMessage()    {}
-func (*StatusResponse) Descriptor() ([]byte, []int) {
+func (m *PongResponse) Reset()         { *m = PongResponse{} }
+func (m *PongResponse) String() string { return proto.CompactTextString(m) }
+func (*PongResponse) ProtoMessage()    {}
+func (*PongResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_0d2c4ccf1453ffdb, []int{1}
 }
 
-func (m *StatusResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_StatusResponse.Unmarshal(m, b)
+func (m *PongResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PongResponse.Unmarshal(m, b)
 }
-func (m *StatusResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_StatusResponse.Marshal(b, m, deterministic)
+func (m *PongResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PongResponse.Marshal(b, m, deterministic)
 }
-func (m *StatusResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_StatusResponse.Merge(m, src)
+func (m *PongResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PongResponse.Merge(m, src)
 }
-func (m *StatusResponse) XXX_Size() int {
-	return xxx_messageInfo_StatusResponse.Size(m)
+func (m *PongResponse) XXX_Size() int {
+	return xxx_messageInfo_PongResponse.Size(m)
 }
-func (m *StatusResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_StatusResponse.DiscardUnknown(m)
+func (m *PongResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_PongResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_StatusResponse proto.InternalMessageInfo
+var xxx_messageInfo_PongResponse proto.InternalMessageInfo
 
-func (m *StatusResponse) GetVersion() string {
+func (m *PongResponse) GetVersion() string {
 	if m != nil {
 		return m.Version
 	}
 	return ""
 }
 
-func (m *StatusResponse) GetSize() int64 {
+func (m *PongResponse) GetSize() int64 {
 	if m != nil {
 		return m.Size
 	}
 	return 0
 }
 
-func (m *StatusResponse) GetBlock() int64 {
+func (m *PongResponse) GetBlock() int64 {
 	if m != nil {
 		return m.Block
-	}
-	return 0
-}
-
-type ContentRange struct {
-	Start                int64    `protobuf:"varint,1,opt,name=start,proto3" json:"start,omitempty"`
-	End                  int64    `protobuf:"varint,2,opt,name=end,proto3" json:"end,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *ContentRange) Reset()         { *m = ContentRange{} }
-func (m *ContentRange) String() string { return proto.CompactTextString(m) }
-func (*ContentRange) ProtoMessage()    {}
-func (*ContentRange) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0d2c4ccf1453ffdb, []int{2}
-}
-
-func (m *ContentRange) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ContentRange.Unmarshal(m, b)
-}
-func (m *ContentRange) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ContentRange.Marshal(b, m, deterministic)
-}
-func (m *ContentRange) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ContentRange.Merge(m, src)
-}
-func (m *ContentRange) XXX_Size() int {
-	return xxx_messageInfo_ContentRange.Size(m)
-}
-func (m *ContentRange) XXX_DiscardUnknown() {
-	xxx_messageInfo_ContentRange.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ContentRange proto.InternalMessageInfo
-
-func (m *ContentRange) GetStart() int64 {
-	if m != nil {
-		return m.Start
-	}
-	return 0
-}
-
-func (m *ContentRange) GetEnd() int64 {
-	if m != nil {
-		return m.End
 	}
 	return 0
 }
@@ -244,7 +201,7 @@ func (m *StorageCreateRequest) Reset()         { *m = StorageCreateRequest{} }
 func (m *StorageCreateRequest) String() string { return proto.CompactTextString(m) }
 func (*StorageCreateRequest) ProtoMessage()    {}
 func (*StorageCreateRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0d2c4ccf1453ffdb, []int{3}
+	return fileDescriptor_0d2c4ccf1453ffdb, []int{2}
 }
 
 func (m *StorageCreateRequest) XXX_Unmarshal(b []byte) error {
@@ -287,21 +244,20 @@ func (m *StorageCreateRequest) GetName() string {
 }
 
 type StorageStoreRequest struct {
-	Hash                 []byte        `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
-	DataHash             []byte        `protobuf:"bytes,2,opt,name=dataHash,proto3" json:"dataHash,omitempty"`
-	Data                 []byte        `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`
-	Size                 int64         `protobuf:"varint,4,opt,name=size,proto3" json:"size,omitempty"`
-	Range                *ContentRange `protobuf:"bytes,5,opt,name=range,proto3" json:"range,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
-	XXX_unrecognized     []byte        `json:"-"`
-	XXX_sizecache        int32         `json:"-"`
+	Info                 []byte   `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
+	Index                int64    `protobuf:"varint,2,opt,name=index,proto3" json:"index,omitempty"`
+	Data                 []byte   `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`
+	Hash                 []byte   `protobuf:"bytes,4,opt,name=hash,proto3" json:"hash,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
 func (m *StorageStoreRequest) Reset()         { *m = StorageStoreRequest{} }
 func (m *StorageStoreRequest) String() string { return proto.CompactTextString(m) }
 func (*StorageStoreRequest) ProtoMessage()    {}
 func (*StorageStoreRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0d2c4ccf1453ffdb, []int{4}
+	return fileDescriptor_0d2c4ccf1453ffdb, []int{3}
 }
 
 func (m *StorageStoreRequest) XXX_Unmarshal(b []byte) error {
@@ -322,18 +278,18 @@ func (m *StorageStoreRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_StorageStoreRequest proto.InternalMessageInfo
 
-func (m *StorageStoreRequest) GetHash() []byte {
+func (m *StorageStoreRequest) GetInfo() []byte {
 	if m != nil {
-		return m.Hash
+		return m.Info
 	}
 	return nil
 }
 
-func (m *StorageStoreRequest) GetDataHash() []byte {
+func (m *StorageStoreRequest) GetIndex() int64 {
 	if m != nil {
-		return m.DataHash
+		return m.Index
 	}
-	return nil
+	return 0
 }
 
 func (m *StorageStoreRequest) GetData() []byte {
@@ -343,16 +299,9 @@ func (m *StorageStoreRequest) GetData() []byte {
 	return nil
 }
 
-func (m *StorageStoreRequest) GetSize() int64 {
+func (m *StorageStoreRequest) GetHash() []byte {
 	if m != nil {
-		return m.Size
-	}
-	return 0
-}
-
-func (m *StorageStoreRequest) GetRange() *ContentRange {
-	if m != nil {
-		return m.Range
+		return m.Hash
 	}
 	return nil
 }
@@ -368,7 +317,7 @@ func (m *StorageFinishRequest) Reset()         { *m = StorageFinishRequest{} }
 func (m *StorageFinishRequest) String() string { return proto.CompactTextString(m) }
 func (*StorageFinishRequest) ProtoMessage()    {}
 func (*StorageFinishRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0d2c4ccf1453ffdb, []int{5}
+	return fileDescriptor_0d2c4ccf1453ffdb, []int{4}
 }
 
 func (m *StorageFinishRequest) XXX_Unmarshal(b []byte) error {
@@ -408,7 +357,7 @@ func (m *StorageResponse) Reset()         { *m = StorageResponse{} }
 func (m *StorageResponse) String() string { return proto.CompactTextString(m) }
 func (*StorageResponse) ProtoMessage()    {}
 func (*StorageResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0d2c4ccf1453ffdb, []int{6}
+	return fileDescriptor_0d2c4ccf1453ffdb, []int{5}
 }
 
 func (m *StorageResponse) XXX_Unmarshal(b []byte) error {
@@ -454,7 +403,7 @@ func (m *GetResponse) Reset()         { *m = GetResponse{} }
 func (m *GetResponse) String() string { return proto.CompactTextString(m) }
 func (*GetResponse) ProtoMessage()    {}
 func (*GetResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0d2c4ccf1453ffdb, []int{7}
+	return fileDescriptor_0d2c4ccf1453ffdb, []int{6}
 }
 
 func (m *GetResponse) XXX_Unmarshal(b []byte) error {
@@ -483,21 +432,20 @@ func (m *GetResponse) GetHash() []byte {
 }
 
 type DataBlock struct {
-	Hash                 []byte           `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
-	Type                 DataBlock_Type   `protobuf:"varint,2,opt,name=type,proto3,enum=DataBlock_Type" json:"type,omitempty"`
-	Range                *ContentRange    `protobuf:"bytes,3,opt,name=range,proto3" json:"range,omitempty"`
-	Data                 []byte           `protobuf:"bytes,4,opt,name=data,proto3" json:"data,omitempty"`
-	Encode               DataBlock_Encode `protobuf:"varint,5,opt,name=encode,proto3,enum=DataBlock_Encode" json:"encode,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
-	XXX_unrecognized     []byte           `json:"-"`
-	XXX_sizecache        int32            `json:"-"`
+	Hash                 []byte         `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
+	Type                 DataBlock_Type `protobuf:"varint,2,opt,name=type,proto3,enum=DataBlock_Type" json:"type,omitempty"`
+	Index                int64          `protobuf:"varint,3,opt,name=index,proto3" json:"index,omitempty"`
+	Data                 []byte         `protobuf:"bytes,4,opt,name=data,proto3" json:"data,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
+	XXX_unrecognized     []byte         `json:"-"`
+	XXX_sizecache        int32          `json:"-"`
 }
 
 func (m *DataBlock) Reset()         { *m = DataBlock{} }
 func (m *DataBlock) String() string { return proto.CompactTextString(m) }
 func (*DataBlock) ProtoMessage()    {}
 func (*DataBlock) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0d2c4ccf1453ffdb, []int{8}
+	return fileDescriptor_0d2c4ccf1453ffdb, []int{7}
 }
 
 func (m *DataBlock) XXX_Unmarshal(b []byte) error {
@@ -532,11 +480,11 @@ func (m *DataBlock) GetType() DataBlock_Type {
 	return DataBlock_STREAM
 }
 
-func (m *DataBlock) GetRange() *ContentRange {
+func (m *DataBlock) GetIndex() int64 {
 	if m != nil {
-		return m.Range
+		return m.Index
 	}
-	return nil
+	return 0
 }
 
 func (m *DataBlock) GetData() []byte {
@@ -546,26 +494,22 @@ func (m *DataBlock) GetData() []byte {
 	return nil
 }
 
-func (m *DataBlock) GetEncode() DataBlock_Encode {
-	if m != nil {
-		return m.Encode
-	}
-	return DataBlock_NONE
-}
-
 type DataResponse struct {
-	Hash                 []byte       `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
-	Blocks               []*DataBlock `protobuf:"bytes,2,rep,name=blocks,proto3" json:"blocks,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
-	XXX_unrecognized     []byte       `json:"-"`
-	XXX_sizecache        int32        `json:"-"`
+	Hash                 []byte              `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
+	Block                int64               `protobuf:"varint,2,opt,name=block,proto3" json:"block,omitempty"`
+	Size                 int64               `protobuf:"varint,3,opt,name=size,proto3" json:"size,omitempty"`
+	Encode               DataResponse_Encode `protobuf:"varint,5,opt,name=encode,proto3,enum=DataResponse_Encode" json:"encode,omitempty"`
+	Blocks               []*DataBlock        `protobuf:"bytes,4,rep,name=blocks,proto3" json:"blocks,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
+	XXX_unrecognized     []byte              `json:"-"`
+	XXX_sizecache        int32               `json:"-"`
 }
 
 func (m *DataResponse) Reset()         { *m = DataResponse{} }
 func (m *DataResponse) String() string { return proto.CompactTextString(m) }
 func (*DataResponse) ProtoMessage()    {}
 func (*DataResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0d2c4ccf1453ffdb, []int{9}
+	return fileDescriptor_0d2c4ccf1453ffdb, []int{8}
 }
 
 func (m *DataResponse) XXX_Unmarshal(b []byte) error {
@@ -593,6 +537,27 @@ func (m *DataResponse) GetHash() []byte {
 	return nil
 }
 
+func (m *DataResponse) GetBlock() int64 {
+	if m != nil {
+		return m.Block
+	}
+	return 0
+}
+
+func (m *DataResponse) GetSize() int64 {
+	if m != nil {
+		return m.Size
+	}
+	return 0
+}
+
+func (m *DataResponse) GetEncode() DataResponse_Encode {
+	if m != nil {
+		return m.Encode
+	}
+	return DataResponse_NONE
+}
+
 func (m *DataResponse) GetBlocks() []*DataBlock {
 	if m != nil {
 		return m.Blocks
@@ -603,10 +568,9 @@ func (m *DataResponse) GetBlocks() []*DataBlock {
 func init() {
 	proto.RegisterEnum("StorageResponse_Error", StorageResponse_Error_name, StorageResponse_Error_value)
 	proto.RegisterEnum("DataBlock_Type", DataBlock_Type_name, DataBlock_Type_value)
-	proto.RegisterEnum("DataBlock_Encode", DataBlock_Encode_name, DataBlock_Encode_value)
-	proto.RegisterType((*HelloRequest)(nil), "HelloRequest")
-	proto.RegisterType((*StatusResponse)(nil), "StatusResponse")
-	proto.RegisterType((*ContentRange)(nil), "ContentRange")
+	proto.RegisterEnum("DataResponse_Encode", DataResponse_Encode_name, DataResponse_Encode_value)
+	proto.RegisterType((*PingRequest)(nil), "PingRequest")
+	proto.RegisterType((*PongResponse)(nil), "PongResponse")
 	proto.RegisterType((*StorageCreateRequest)(nil), "StorageCreateRequest")
 	proto.RegisterType((*StorageStoreRequest)(nil), "StorageStoreRequest")
 	proto.RegisterType((*StorageFinishRequest)(nil), "StorageFinishRequest")
@@ -621,41 +585,273 @@ func init() {
 }
 
 var fileDescriptor_0d2c4ccf1453ffdb = []byte{
-	// 567 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x54, 0x4d, 0x4f, 0xdb, 0x40,
-	0x10, 0x8d, 0xe3, 0x0f, 0xc8, 0xe0, 0x04, 0xb3, 0xa5, 0xc8, 0x4a, 0x55, 0x29, 0x5d, 0x7a, 0x08,
-	0x1c, 0x2c, 0xd5, 0x95, 0x7a, 0x0f, 0xa9, 0x09, 0x88, 0x92, 0x48, 0x9b, 0xa0, 0x1e, 0xd1, 0x42,
-	0x56, 0x49, 0xd4, 0x60, 0xa7, 0xde, 0xa5, 0x12, 0xfd, 0x19, 0xbd, 0xf6, 0xef, 0xf5, 0x2f, 0xf4,
-	0x5e, 0xed, 0xac, 0x31, 0x6e, 0x95, 0x46, 0xe2, 0x94, 0x99, 0x9d, 0x37, 0xcf, 0x6f, 0xdf, 0xec,
-	0x04, 0x9a, 0x52, 0x65, 0x39, 0x9f, 0x89, 0x68, 0x95, 0x67, 0x2a, 0xa3, 0x2d, 0xf0, 0xcf, 0xc4,
-	0x72, 0x99, 0x31, 0xf1, 0xf5, 0x5e, 0x48, 0x45, 0x27, 0xd0, 0x1a, 0x2b, 0xae, 0xee, 0x25, 0x13,
-	0x72, 0x95, 0xa5, 0x52, 0x90, 0x10, 0xb6, 0xbe, 0x89, 0x5c, 0x2e, 0xb2, 0x34, 0xb4, 0x3a, 0x56,
-	0xb7, 0xc1, 0x1e, 0x53, 0x42, 0xc0, 0x91, 0x8b, 0xef, 0x22, 0xac, 0x77, 0xac, 0xae, 0xcd, 0x30,
-	0x26, 0xfb, 0xe0, 0xde, 0x2c, 0xb3, 0xdb, 0x2f, 0xa1, 0x8d, 0x87, 0x26, 0xa1, 0x1f, 0xc0, 0xef,
-	0x67, 0xa9, 0x12, 0xa9, 0x62, 0x3c, 0x9d, 0x21, 0x4a, 0x2a, 0x9e, 0x2b, 0x64, 0xb4, 0x99, 0x49,
-	0x48, 0x00, 0xb6, 0x48, 0xa7, 0x05, 0x9d, 0x0e, 0x29, 0x83, 0xfd, 0xb1, 0x91, 0xdb, 0xcf, 0x05,
-	0x57, 0xa2, 0x50, 0xa9, 0xbf, 0x3c, 0xe7, 0x72, 0x8e, 0xed, 0x3e, 0xc3, 0x78, 0xad, 0x1a, 0x02,
-	0x4e, 0xca, 0xef, 0x04, 0x8a, 0x69, 0x30, 0x8c, 0xe9, 0x0f, 0x0b, 0x5e, 0x14, 0xa4, 0xfa, 0x67,
-	0x23, 0x67, 0x1b, 0xb6, 0xa7, 0x5c, 0xf1, 0x33, 0x7d, 0x5e, 0xc7, 0xf3, 0x32, 0xd7, 0x78, 0x1d,
-	0x23, 0xb7, 0xcf, 0x30, 0x2e, 0x35, 0x38, 0x15, 0x0d, 0x87, 0xe0, 0xe6, 0xfa, 0xd2, 0xa1, 0xdb,
-	0xb1, 0xba, 0x3b, 0x71, 0x33, 0xaa, 0x3a, 0xc1, 0x4c, 0x8d, 0x1e, 0x97, 0x17, 0x3d, 0x5d, 0xa4,
-	0x0b, 0x39, 0xdf, 0x20, 0x8a, 0xfe, 0xb4, 0x60, 0xb7, 0x00, 0x97, 0x43, 0x3a, 0x06, 0xe7, 0x36,
-	0x9b, 0x0a, 0xc4, 0xb5, 0xe2, 0x83, 0xe8, 0x9f, 0x7a, 0x94, 0xe4, 0x79, 0x96, 0x33, 0xc4, 0xe8,
-	0x81, 0xde, 0x09, 0x29, 0xf9, 0xcc, 0x78, 0xd5, 0x60, 0x8f, 0x29, 0x3d, 0x01, 0x17, 0x81, 0xa4,
-	0x05, 0x90, 0x30, 0x36, 0x62, 0xd7, 0xc3, 0xd1, 0x30, 0x09, 0x6a, 0x64, 0x0f, 0x9a, 0x26, 0xbf,
-	0x1a, 0x5e, 0x0c, 0x47, 0x9f, 0x87, 0x81, 0x45, 0x0e, 0x80, 0x98, 0xa3, 0x4f, 0xbd, 0xfe, 0xc5,
-	0xf5, 0x78, 0x32, 0x62, 0xbd, 0x41, 0x12, 0xd4, 0xe9, 0x1b, 0xd8, 0x19, 0x08, 0x55, 0x0a, 0x5b,
-	0x77, 0x81, 0x5f, 0x16, 0x34, 0x3e, 0x72, 0xc5, 0x4f, 0xf4, 0xdb, 0x58, 0xeb, 0xfb, 0x21, 0x38,
-	0xea, 0x61, 0x65, 0xf4, 0xb5, 0xe2, 0xdd, 0xa8, 0x44, 0x47, 0x93, 0x87, 0x95, 0x60, 0x58, 0x7c,
-	0x32, 0xd6, 0xfe, 0xbf, 0xb1, 0xe5, 0x94, 0x9c, 0xca, 0x94, 0x8e, 0xc0, 0x13, 0x29, 0xda, 0xe5,
-	0x22, 0xff, 0x5e, 0x85, 0x3f, 0xc1, 0x02, 0x2b, 0x00, 0xf4, 0x15, 0x38, 0xfa, 0x8b, 0x04, 0xc0,
-	0x1b, 0x4f, 0x58, 0xd2, 0xbb, 0x0c, 0x6a, 0x64, 0x0b, 0xec, 0x2b, 0x76, 0x1e, 0x58, 0xf4, 0x35,
-	0x78, 0x06, 0x4e, 0xb6, 0xc1, 0x29, 0x9c, 0x6a, 0x80, 0x7b, 0x7e, 0xa9, 0x9d, 0xb0, 0xe8, 0x29,
-	0xf8, 0x9a, 0x77, 0x93, 0x15, 0x84, 0x82, 0x87, 0x1b, 0x22, 0xc3, 0x7a, 0xc7, 0xee, 0xee, 0xc4,
-	0xf0, 0x24, 0x85, 0x15, 0x95, 0xf8, 0xb7, 0x05, 0x5b, 0xc5, 0x3c, 0xc9, 0x11, 0xb8, 0xb8, 0xae,
-	0xa4, 0x19, 0x55, 0xd7, 0xb6, 0xbd, 0x1b, 0xfd, 0xbd, 0xb5, 0xb4, 0x46, 0x62, 0xf0, 0xcc, 0xd2,
-	0x90, 0x97, 0xd1, 0xba, 0x25, 0x5a, 0xd7, 0xf3, 0x0e, 0x5c, 0xdc, 0x89, 0x67, 0xb4, 0xc4, 0xe0,
-	0x99, 0x27, 0xfb, 0x8c, 0x9e, 0xb7, 0x60, 0x0f, 0x84, 0x22, 0x7e, 0x54, 0x79, 0x29, 0xed, 0x66,
-	0x54, 0x75, 0x8b, 0xd6, 0x6e, 0x3c, 0xfc, 0x87, 0x7a, 0xff, 0x27, 0x00, 0x00, 0xff, 0xff, 0xf2,
-	0xe7, 0xd4, 0xf6, 0xb2, 0x04, 0x00, 0x00,
+	// 540 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x54, 0xef, 0x6e, 0xd3, 0x30,
+	0x10, 0xaf, 0x9b, 0x3f, 0x23, 0xd7, 0xb4, 0x0b, 0xa6, 0x4c, 0x55, 0x11, 0x52, 0x31, 0x08, 0x55,
+	0x13, 0xf2, 0x87, 0xf6, 0x09, 0xba, 0x11, 0xca, 0x34, 0xd6, 0x4e, 0x6e, 0x27, 0x3e, 0x4e, 0xd9,
+	0x6a, 0xda, 0x88, 0x2e, 0x2e, 0x71, 0x40, 0x8c, 0x57, 0xe0, 0x11, 0x78, 0x16, 0x9e, 0x8b, 0xaf,
+	0xc8, 0x76, 0x9a, 0x66, 0x53, 0x34, 0x69, 0x9f, 0x72, 0xe7, 0xbb, 0xfb, 0xf9, 0xe7, 0xbb, 0xdf,
+	0x05, 0x9a, 0x32, 0x13, 0x69, 0xb4, 0xe4, 0x74, 0x93, 0x8a, 0x4c, 0x90, 0x26, 0x34, 0xce, 0xe3,
+	0x64, 0xc9, 0xf8, 0xb7, 0xef, 0x5c, 0x66, 0x84, 0x81, 0x7f, 0x2e, 0x94, 0x2b, 0x37, 0x22, 0x91,
+	0x1c, 0x77, 0x60, 0xef, 0x07, 0x4f, 0x65, 0x2c, 0x92, 0x0e, 0xea, 0xa1, 0xbe, 0xc7, 0xb6, 0x2e,
+	0xc6, 0x60, 0xcb, 0xf8, 0x17, 0xef, 0xd4, 0x7b, 0xa8, 0x6f, 0x31, 0x6d, 0xe3, 0x36, 0x38, 0x57,
+	0x6b, 0x71, 0xfd, 0xb5, 0x63, 0xe9, 0x43, 0xe3, 0x10, 0x06, 0xed, 0x99, 0xb9, 0xf3, 0x38, 0xe5,
+	0x51, 0xc6, 0xf3, 0xbb, 0x14, 0xc2, 0x2a, 0x92, 0x2b, 0x0d, 0xec, 0x33, 0x6d, 0x57, 0xa2, 0x62,
+	0xb0, 0x93, 0xe8, 0x86, 0x6b, 0x50, 0x8f, 0x69, 0x9b, 0x2c, 0xe1, 0x59, 0x8e, 0xa9, 0x3e, 0x65,
+	0xc8, 0x38, 0xf9, 0x22, 0xb6, 0x90, 0xca, 0x56, 0xa4, 0xe2, 0x64, 0xc1, 0x7f, 0xe6, 0x98, 0xc6,
+	0x51, 0x99, 0x8b, 0x28, 0x8b, 0x34, 0xa8, 0xcf, 0xb4, 0x5d, 0x10, 0xb2, 0x77, 0x84, 0xc8, 0x61,
+	0x41, 0xfe, 0x43, 0x9c, 0xc4, 0x72, 0xf5, 0x00, 0x79, 0xf2, 0x07, 0xc1, 0x7e, 0x9e, 0x5c, 0x34,
+	0xf0, 0x10, 0xec, 0x6b, 0xb1, 0xe0, 0x3a, 0xaf, 0x35, 0x38, 0xa0, 0xf7, 0xe2, 0x34, 0x4c, 0x53,
+	0x91, 0x32, 0x9d, 0xa3, 0x9a, 0x7d, 0xc3, 0xa5, 0x8c, 0x96, 0xe6, 0xfd, 0x1e, 0xdb, 0xba, 0xe4,
+	0x08, 0x1c, 0x9d, 0x88, 0x5b, 0x00, 0x21, 0x63, 0x53, 0x76, 0x39, 0x99, 0x4e, 0xc2, 0xa0, 0x86,
+	0x9f, 0x42, 0xd3, 0xf8, 0x17, 0x93, 0xd3, 0xc9, 0xf4, 0xf3, 0x24, 0x40, 0xf8, 0x00, 0xb0, 0x39,
+	0xfa, 0x34, 0x3a, 0x3e, 0xbd, 0x9c, 0xcd, 0xa7, 0x6c, 0x34, 0x0e, 0x83, 0x3a, 0x79, 0x05, 0x8d,
+	0x31, 0xcf, 0x0a, 0x62, 0x55, 0x0f, 0xf8, 0x8d, 0xc0, 0x7b, 0x1f, 0x65, 0xd1, 0x91, 0x9a, 0x5b,
+	0xe5, 0x7c, 0x5e, 0x83, 0x9d, 0xdd, 0x6e, 0x0c, 0xbf, 0xd6, 0x60, 0x9f, 0x16, 0xd9, 0x74, 0x7e,
+	0xbb, 0xe1, 0x4c, 0x07, 0x77, 0x1d, 0xb7, 0xaa, 0x3a, 0x6e, 0xef, 0x3a, 0x4e, 0x5e, 0x80, 0xad,
+	0xea, 0x30, 0x80, 0x3b, 0x9b, 0xb3, 0x70, 0x74, 0x16, 0xd4, 0xf0, 0x1e, 0x58, 0x17, 0xec, 0x24,
+	0x40, 0xe4, 0x2f, 0x02, 0x5f, 0xe1, 0x3f, 0x44, 0x79, 0x27, 0xb9, 0x7a, 0x49, 0x72, 0x85, 0x8c,
+	0xac, 0x92, 0x8c, 0xde, 0x81, 0xcb, 0x13, 0x3d, 0x0b, 0x47, 0x93, 0x6f, 0xd3, 0x32, 0x38, 0x0d,
+	0x75, 0x8c, 0xe5, 0x39, 0x98, 0x80, 0xab, 0xa1, 0x64, 0xc7, 0xee, 0x59, 0xfd, 0xc6, 0x00, 0x76,
+	0x4f, 0x65, 0x79, 0x84, 0xbc, 0x04, 0xd7, 0x54, 0xe1, 0x27, 0x60, 0xe7, 0x03, 0xf1, 0xc0, 0x39,
+	0x39, 0x53, 0x0d, 0x47, 0x83, 0x7f, 0x08, 0xbc, 0xb1, 0xc8, 0x07, 0x8e, 0xdf, 0x82, 0xf3, 0x91,
+	0xaf, 0xd7, 0x02, 0xfb, 0xb4, 0xb4, 0x70, 0xdd, 0x26, 0x2d, 0xef, 0x1b, 0xa9, 0xe1, 0x21, 0xb8,
+	0x66, 0x4d, 0xf0, 0x73, 0x5a, 0xb5, 0x36, 0xdd, 0xe0, 0xbe, 0x86, 0x48, 0x0d, 0x0f, 0xc0, 0xd1,
+	0x7b, 0xf0, 0x98, 0x9a, 0x21, 0xb8, 0x46, 0xd2, 0x8f, 0x29, 0x7a, 0x03, 0xd6, 0x98, 0x67, 0xd8,
+	0xa7, 0x25, 0x29, 0x75, 0x9b, 0x77, 0x3a, 0x49, 0x6a, 0x57, 0xae, 0xfe, 0xb7, 0x0c, 0xff, 0x07,
+	0x00, 0x00, 0xff, 0xff, 0x8a, 0xa9, 0x0a, 0xe7, 0x6c, 0x04, 0x00, 0x00,
+}
+
+// Reference imports to suppress errors if they are not otherwise used.
+var _ context.Context
+var _ grpc.ClientConnInterface
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the grpc package it is being compiled against.
+const _ = grpc.SupportPackageIsVersion6
+
+// GoStorageClient is the client API for GoStorage service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+type GoStorageClient interface {
+	// 获取状态
+	Hello(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PongResponse, error)
+	// 创建数据
+	Create(ctx context.Context, in *StorageCreateRequest, opts ...grpc.CallOption) (*StorageResponse, error)
+	// 保存数据
+	Store(ctx context.Context, in *StorageCreateRequest, opts ...grpc.CallOption) (*StorageResponse, error)
+	// 完成数据
+	Finish(ctx context.Context, in *StorageCreateRequest, opts ...grpc.CallOption) (*StorageResponse, error)
+	// 获取数据
+	Get(ctx context.Context, in *GetResponse, opts ...grpc.CallOption) (*DataResponse, error)
+}
+
+type goStorageClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewGoStorageClient(cc grpc.ClientConnInterface) GoStorageClient {
+	return &goStorageClient{cc}
+}
+
+func (c *goStorageClient) Hello(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PongResponse, error) {
+	out := new(PongResponse)
+	err := c.cc.Invoke(ctx, "/GoStorage/Hello", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *goStorageClient) Create(ctx context.Context, in *StorageCreateRequest, opts ...grpc.CallOption) (*StorageResponse, error) {
+	out := new(StorageResponse)
+	err := c.cc.Invoke(ctx, "/GoStorage/Create", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *goStorageClient) Store(ctx context.Context, in *StorageCreateRequest, opts ...grpc.CallOption) (*StorageResponse, error) {
+	out := new(StorageResponse)
+	err := c.cc.Invoke(ctx, "/GoStorage/Store", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *goStorageClient) Finish(ctx context.Context, in *StorageCreateRequest, opts ...grpc.CallOption) (*StorageResponse, error) {
+	out := new(StorageResponse)
+	err := c.cc.Invoke(ctx, "/GoStorage/Finish", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *goStorageClient) Get(ctx context.Context, in *GetResponse, opts ...grpc.CallOption) (*DataResponse, error) {
+	out := new(DataResponse)
+	err := c.cc.Invoke(ctx, "/GoStorage/Get", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// GoStorageServer is the server API for GoStorage service.
+type GoStorageServer interface {
+	// 获取状态
+	Hello(context.Context, *PingRequest) (*PongResponse, error)
+	// 创建数据
+	Create(context.Context, *StorageCreateRequest) (*StorageResponse, error)
+	// 保存数据
+	Store(context.Context, *StorageCreateRequest) (*StorageResponse, error)
+	// 完成数据
+	Finish(context.Context, *StorageCreateRequest) (*StorageResponse, error)
+	// 获取数据
+	Get(context.Context, *GetResponse) (*DataResponse, error)
+}
+
+// UnimplementedGoStorageServer can be embedded to have forward compatible implementations.
+type UnimplementedGoStorageServer struct {
+}
+
+func (*UnimplementedGoStorageServer) Hello(ctx context.Context, req *PingRequest) (*PongResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Hello not implemented")
+}
+func (*UnimplementedGoStorageServer) Create(ctx context.Context, req *StorageCreateRequest) (*StorageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
+}
+func (*UnimplementedGoStorageServer) Store(ctx context.Context, req *StorageCreateRequest) (*StorageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Store not implemented")
+}
+func (*UnimplementedGoStorageServer) Finish(ctx context.Context, req *StorageCreateRequest) (*StorageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Finish not implemented")
+}
+func (*UnimplementedGoStorageServer) Get(ctx context.Context, req *GetResponse) (*DataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+}
+
+func RegisterGoStorageServer(s *grpc.Server, srv GoStorageServer) {
+	s.RegisterService(&_GoStorage_serviceDesc, srv)
+}
+
+func _GoStorage_Hello_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GoStorageServer).Hello(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/GoStorage/Hello",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GoStorageServer).Hello(ctx, req.(*PingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GoStorage_Create_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StorageCreateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GoStorageServer).Create(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/GoStorage/Create",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GoStorageServer).Create(ctx, req.(*StorageCreateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GoStorage_Store_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StorageCreateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GoStorageServer).Store(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/GoStorage/Store",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GoStorageServer).Store(ctx, req.(*StorageCreateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GoStorage_Finish_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StorageCreateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GoStorageServer).Finish(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/GoStorage/Finish",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GoStorageServer).Finish(ctx, req.(*StorageCreateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GoStorage_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetResponse)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GoStorageServer).Get(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/GoStorage/Get",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GoStorageServer).Get(ctx, req.(*GetResponse))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+var _GoStorage_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "GoStorage",
+	HandlerType: (*GoStorageServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Hello",
+			Handler:    _GoStorage_Hello_Handler,
+		},
+		{
+			MethodName: "Create",
+			Handler:    _GoStorage_Create_Handler,
+		},
+		{
+			MethodName: "Store",
+			Handler:    _GoStorage_Store_Handler,
+		},
+		{
+			MethodName: "Finish",
+			Handler:    _GoStorage_Finish_Handler,
+		},
+		{
+			MethodName: "Get",
+			Handler:    _GoStorage_Get_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "storage.proto",
 }

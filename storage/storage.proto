@@ -1,17 +1,12 @@
 syntax = "proto3";
 
-message HelloRequest {
+message PingRequest {
 }
 
-message StatusResponse {
+message PongResponse {
     string version = 1; // 系统版本
     int64 size = 2; // 存储空间大小
     int64 block = 3; // 允许最大块大小
-}
-
-message ContentRange {
-    int64 start = 1;
-    int64 end = 2;
 }
 
 
@@ -22,11 +17,10 @@ message StorageCreateRequest {
 }
 
 message StorageStoreRequest {
-    bytes hash = 1; // 总HASH
-    bytes dataHash = 2; // 数据HASH
+    bytes info = 1; // 总HASH
+    int64 index = 2; // 块索引
     bytes data = 3; // 存储的数据
-    int64 size = 4; // 总大小
-    ContentRange range = 5; // 内容范围
+    bytes hash = 4; // 数据HASH
 }
 
 message StorageFinishRequest {
@@ -54,35 +48,37 @@ message DataBlock {
         URI = 1; // 下载URI
     }
 
+    bytes hash = 1;
+    Type type = 2; // 块类型
+    int64 index = 3; // 块索引
+    bytes data = 4; // 内容
+
+}
+
+message DataResponse {
     enum Encode {
         NONE = 0;
         IMAGE = 1;
     }
-
-    bytes hash = 1;
-    Type type = 2; // 块类型
-    ContentRange range = 3; // 范围
-    bytes data = 4; // 内容
-    Encode encode = 5; // 是否编码
-}
-
-message DataResponse {
     bytes hash = 1; // 总HASH
-    repeated DataBlock blocks = 2;
+    int64 block = 2; // 块大小
+    int64 size = 3; // 总大小
+    Encode encode = 5; // 是否编码
+    repeated DataBlock blocks = 4; // 数据块
 }
 
-service Storage {
+service GoStorage {
     // 获取状态
-    rpc Hello (HelloRequest) returns (StatusResponse) {
+    rpc Hello (PingRequest) returns (PongResponse) {
     }
     // 创建数据
-    rpc Create (StorageCreateRequest) returns (StatusResponse) {
+    rpc Create (StorageCreateRequest) returns (StorageResponse) {
     }
     // 保存数据
-    rpc Store (StorageCreateRequest) returns (StatusResponse) {
+    rpc Store (StorageCreateRequest) returns (StorageResponse) {
     }
     // 完成数据
-    rpc Finish (StorageCreateRequest) returns (StatusResponse) {
+    rpc Finish (StorageCreateRequest) returns (StorageResponse) {
     }
     // 获取数据
     rpc Get (GetResponse) returns (DataResponse) {
