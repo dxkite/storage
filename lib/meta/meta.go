@@ -5,18 +5,40 @@ import (
 	"os"
 )
 
+const (
+	Create int = iota
+	Uploading
+	Finish
+)
+
 type MetaInfo struct {
+	Status int
 	Hash   []byte
+	Name   string
 	Size   int64
 	Encode int32
-	Blocks []DataBlock
+	Type   int32
+	Block  []DataBlock
 }
 
 type DataBlock struct {
 	Hash  []byte
-	Type  int32
 	Index int64
 	Data  []byte
+}
+
+func (m *MetaInfo) AppendBlock(b *DataBlock) {
+	if m.Block == nil {
+		m.Block = []DataBlock{*b}
+		return
+	}
+	for i, bb := range m.Block {
+		if bb.Index == b.Index {
+			m.Block[i] = *b
+			return
+		}
+	}
+	m.Block = append(m.Block, *b)
 }
 
 func EncodeToFile(path string, info *MetaInfo) error {

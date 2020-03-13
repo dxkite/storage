@@ -10,7 +10,7 @@ func TestEnDecodeToFile(t *testing.T) {
 		Hash:   []byte{0, 1, 2, 3, 4, 5},
 		Size:   1020,
 		Encode: 0,
-		Blocks: []DataBlock{
+		Block: []DataBlock{
 			{
 				Hash:  []byte{1, 2, 3, 5, 6, 7, 8, 9, 0},
 				Type:  0,

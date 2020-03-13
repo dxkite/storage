@@ -1,6 +1,7 @@
 package encoding
 
 import (
+	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -105,11 +106,12 @@ func (p *imageReadWriter) resize() *image.NRGBA {
 	w, h := getSize(HeaderLength + int(p.Length))
 	p.Image.Stride = 4 * w
 	p.Image.Rect = image.Rect(0, 0, w, h)
+	p.Image.Pix = p.Image.Pix[0 : w*h*4]
 	return p.Image
 }
 
 func getSize(size int) (w, h int) {
-	x := size / 4
+	x := math.Ceil(float64(size) / 4)
 	d := math.Sqrt(float64(x))
 	return int(math.Ceil(d)), int(math.Ceil(d))
 }
@@ -141,7 +143,30 @@ func (*Encoder) Encode(w io.Writer, r io.Reader) error {
 	if _, err := io.Copy(p, r); err != nil {
 		return err
 	}
-	return png.Encode(w, p.resize())
+	p.resize()
+	return png.Encode(w, p.Image)
 }
 
-var StdImageEncoding = &Encoder{}
+// 编码
+func EncodeByte(input []byte) ([]byte, error) {
+	i := bytes.NewBuffer(input)
+	o := &bytes.Buffer{}
+	e := Encoder{}
+	err := e.Encode(o, i)
+	if err != nil {
+		return nil, err
+	}
+	return o.Bytes(), nil
+}
+
+// 编码
+func DecodeByte(input []byte) ([]byte, error) {
+	i := bytes.NewBuffer(input)
+	o := &bytes.Buffer{}
+	e := Encoder{}
+	err := e.Decode(i, o)
+	if err != nil {
+		return nil, err
+	}
+	return o.Bytes(), nil
+}

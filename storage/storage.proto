@@ -11,7 +11,7 @@ message PongResponse {
 
 
 message StorageCreateRequest {
-    bytes hash = 1; // 总HASH
+    bytes info = 1; // 总HASH
     int64 size = 2; // 总大小
     string name = 3; // 文件名
 }
@@ -24,14 +24,16 @@ message StorageStoreRequest {
 }
 
 message StorageFinishRequest {
-    bytes hash = 1; // 总HASH
+    bytes info = 1; // 总HASH
 }
 
 message StorageResponse {
     enum Error {
-        ERROR_NONE = 0; // 未知错误
+        ERROR_NONE = 0; // 无错误
         ERROR_UNKNOWN = 1; // 未知错误
         ERROR_LACK_STORAGE = 2; // 存储空间不足
+        ERROR_HASH = 3; // Hash长度错误
+        ERROR_STORE = 5; // 储存失败
     }
 
     Error code = 1;
@@ -39,20 +41,13 @@ message StorageResponse {
 }
 
 message GetResponse {
-    bytes hash = 1;
+    bytes info = 1;
 }
 
 message DataBlock {
-    enum Type {
-        STREAM = 0; // 比特流
-        URI = 1; // 下载URI
-    }
-
     bytes hash = 1;
-    Type type = 2; // 块类型
-    int64 index = 3; // 块索引
-    bytes data = 4; // 内容
-
+    int64 index = 2; // 块索引
+    bytes data = 3; // 内容
 }
 
 message DataResponse {
@@ -60,11 +55,16 @@ message DataResponse {
         NONE = 0;
         IMAGE = 1;
     }
+    enum Type {
+        STREAM = 0; // 比特流
+        URI = 1; // 下载URI
+    }
     bytes hash = 1; // 总HASH
     int64 block = 2; // 块大小
     int64 size = 3; // 总大小
+    Type type = 4; // 块类型
     Encode encode = 5; // 是否编码
-    repeated DataBlock blocks = 4; // 数据块
+    repeated DataBlock blocks = 6; // 数据块
 }
 
 service GoStorage {
@@ -75,10 +75,10 @@ service GoStorage {
     rpc Create (StorageCreateRequest) returns (StorageResponse) {
     }
     // 保存数据
-    rpc Store (StorageCreateRequest) returns (StorageResponse) {
+    rpc Store (StorageStoreRequest) returns (StorageResponse) {
     }
     // 完成数据
-    rpc Finish (StorageCreateRequest) returns (StorageResponse) {
+    rpc Finish (StorageFinishRequest) returns (StorageResponse) {
     }
     // 获取数据
     rpc Get (GetResponse) returns (DataResponse) {
