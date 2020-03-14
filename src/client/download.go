@@ -21,27 +21,54 @@ import (
 
 type Downloader struct {
 	DownloadMeta
-	Remote string
-	File   *block.BlockFile
+	File  *block.BlockFile
+	Error error
+	mutex sync.Mutex
 }
 
-func NewDownloader(remote string, info []byte) *Downloader {
-	return &Downloader{
+type MetaDownloader struct {
+	Downloader
+	MetaPath string
+}
+
+type RemoteDownloader struct {
+	Downloader
+	Remote string
+}
+
+func NewRemoteDownloader(remote string, info []byte) *RemoteDownloader {
+	d := &RemoteDownloader{
 		Remote: remote,
-		DownloadMeta: DownloadMeta{
-			Info: info,
-		},
+	}
+	d.Hash = info
+	return d
+}
+
+func NewMetaDownloader(path string) *MetaDownloader {
+	return &MetaDownloader{
+		MetaPath: path,
 	}
 }
 
-func (d *Downloader) DownloadToFile(path string) error {
+func (d *RemoteDownloader) DownloadToFile(path string) error {
 	df, err := d.init(path)
 	if err != nil {
 		return err
 	}
-	var g sync.WaitGroup
+	return d.download(df)
+}
 
-	for _, bb := range d.Meta.Block {
+func (d *MetaDownloader) DownloadToFile(path string) error {
+	df, err := d.init(d.MetaPath, path)
+	if err != nil {
+		return err
+	}
+	return d.download(df)
+}
+
+func (d *Downloader) download(df string) error {
+	var g sync.WaitGroup
+	for _, bb := range d.Block {
 		g.Add(1)
 		go func(b meta.DataBlock) {
 			err := d.downloadBlock(df, &b)
@@ -51,14 +78,53 @@ func (d *Downloader) DownloadToFile(path string) error {
 			g.Done()
 		}(bb)
 	}
-
 	g.Wait()
 	return nil
 }
 
-func (d *Downloader) init(p string) (string, error) {
+func (d *MetaDownloader) init(metaFile, p string) (string, error) {
+	m, er := meta.DecodeToFile(metaFile)
+	if er != nil {
+		return "", er
+	}
+	d.MetaInfo = *m
 	_ = os.MkdirAll(p, os.ModePerm)
-	df := path.Join(p, fmt.Sprintf("%x.gs-downloading", d.Info))
+	df := path.Join(p, fmt.Sprintf("%x.gs-downloading", d.Hash))
+	if FileExist(df) {
+		log.Println("reload meta info")
+		dd, err := DecodeToFile(df)
+		if err != nil {
+			return df, errors.New(fmt.Sprintf("reload downloading: %v", err))
+		}
+		d.DownloadMeta = *dd
+		file, err := os.OpenFile(path.Join(p, d.Name), os.O_CREATE|os.O_RDWR, os.ModePerm)
+		if err != nil {
+			return df, err
+		}
+		d.File = &block.BlockFile{
+			File: file,
+			Hash: d.Hash,
+		}
+	} else {
+		d.Index = bitset.New(int64(len(m.Block)))
+		d.DownloadTotal = len(m.Block)
+		d.Downloaded = 0
+		log.Println("create file", path.Join(p, d.Name))
+		file, err := os.OpenFile(path.Join(p, d.Name), os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.ModePerm)
+		if err != nil {
+			return df, err
+		}
+		d.File = &block.BlockFile{
+			File: file,
+			Hash: m.Hash,
+		}
+	}
+	return df, nil
+}
+
+func (d *RemoteDownloader) init(p string) (string, error) {
+	_ = os.MkdirAll(p, os.ModePerm)
+	df := path.Join(p, fmt.Sprintf("%x.gs-downloading", d.Hash))
 
 	if FileExist(df) {
 		log.Println("reload meta info")
@@ -67,13 +133,13 @@ func (d *Downloader) init(p string) (string, error) {
 			return df, errors.New(fmt.Sprintf("reload downloading: %v", err))
 		}
 		d.DownloadMeta = *dd
-		file, err := os.OpenFile(path.Join(p, d.Meta.Name), os.O_CREATE|os.O_RDWR, os.ModePerm)
+		file, err := os.OpenFile(path.Join(p, d.Name), os.O_CREATE|os.O_RDWR, os.ModePerm)
 		if err != nil {
 			return df, err
 		}
 		d.File = &block.BlockFile{
 			File: file,
-			Hash: d.Info,
+			Hash: d.Hash,
 		}
 	} else {
 		log.Println("downloading meta info")
@@ -82,14 +148,13 @@ func (d *Downloader) init(p string) (string, error) {
 			return df, er
 		}
 
-		d.BlockSize = m.Block
-		d.Size = m.Size
+		d.MetaInfo = *NewMeta(m)
 		d.Index = bitset.New(int64(len(m.Blocks)))
-		d.Meta = NewMeta(m)
 		d.DownloadTotal = len(m.Blocks)
 		d.Downloaded = 0
-		log.Println("create file", path.Join(p, d.Meta.Name))
-		file, err := os.OpenFile(path.Join(p, d.Meta.Name), os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.ModePerm)
+
+		log.Println("create file", path.Join(p, d.Name))
+		file, err := os.OpenFile(path.Join(p, d.Name), os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.ModePerm)
 		if err != nil {
 			return df, err
 		}
@@ -167,7 +232,7 @@ func (d *Downloader) downloadBlock(df string, dataBlock *meta.DataBlock) error {
 	return nil
 }
 
-func (d *Downloader) getMeta() (*storage.DataResponse, error) {
+func (d *RemoteDownloader) getMeta() (*storage.DataResponse, error) {
 	conn, err := grpc.Dial(d.Remote, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
@@ -176,7 +241,7 @@ func (d *Downloader) getMeta() (*storage.DataResponse, error) {
 	c := storage.NewGoStorageClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*100)
 	defer cancel()
-	r, er := c.Get(ctx, &storage.GetResponse{Info: d.Info})
+	r, er := c.Get(ctx, &storage.GetResponse{Info: d.Hash})
 	if er != nil {
 		return nil, er
 	}

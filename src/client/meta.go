@@ -8,13 +8,10 @@ import (
 )
 
 type DownloadMeta struct {
-	Info          []byte
-	Size          int64
-	BlockSize     int64
+	meta.MetaInfo
 	Index         bitset.BitSet
 	Downloaded    int
 	DownloadTotal int
-	Meta          *meta.MetaInfo
 }
 
 func EncodeToFile(path string, info *DownloadMeta) error {
