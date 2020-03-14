@@ -8,7 +8,6 @@ import (
 	"dxkite.cn/go-storage/src/image"
 	"dxkite.cn/go-storage/src/meta"
 	"dxkite.cn/go-storage/storage"
-	"encoding/gob"
 	"errors"
 	"fmt"
 	"google.golang.org/grpc"
@@ -19,27 +18,17 @@ import (
 	"time"
 )
 
-type DownloadMeta struct {
-	Info          []byte
-	Remote        string
-	Size          int64
-	BlockSize     int64
-	Index         bitset.BitSet
-	Downloaded    int
-	DownloadTotal int
-	Meta          *meta.MetaInfo
-}
-
 type Downloader struct {
 	DownloadMeta
-	File *block.BlockFile
+	Remote string
+	File   *block.BlockFile
 }
 
 func NewDownloader(remote string, info []byte) *Downloader {
 	return &Downloader{
+		Remote: remote,
 		DownloadMeta: DownloadMeta{
-			Info:   info,
-			Remote: remote,
+			Info: info,
 		},
 	}
 }
@@ -114,29 +103,6 @@ func FileExist(path string) bool {
 		return false
 	}
 	return true
-}
-
-func EncodeToFile(path string, info *DownloadMeta) error {
-	f, er := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.ModePerm)
-	if er != nil {
-		return er
-	}
-	b := gob.NewEncoder(f)
-	return b.Encode(info)
-}
-
-func DecodeToFile(path string) (*DownloadMeta, error) {
-	f, er := os.OpenFile(path, os.O_RDONLY, os.ModePerm)
-	if er != nil {
-		return nil, er
-	}
-	b := gob.NewDecoder(f)
-	info := new(DownloadMeta)
-	der := b.Decode(&info)
-	if der != nil {
-		return nil, der
-	}
-	return info, nil
 }
 
 type DownloadRetryable struct {

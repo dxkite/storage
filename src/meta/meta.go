@@ -47,6 +47,7 @@ func EncodeToFile(path string, info *MetaInfo) error {
 	if er != nil {
 		return er
 	}
+	defer func() { _ = f.Close() }()
 	b := gob.NewEncoder(f)
 	return b.Encode(info)
 }
@@ -62,5 +63,6 @@ func DecodeToFile(path string) (*MetaInfo, error) {
 	if der != nil {
 		return nil, der
 	}
+	defer func() { _ = f.Close() }()
 	return info, nil
 }

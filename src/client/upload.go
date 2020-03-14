@@ -65,7 +65,7 @@ func (u *Uploader) UploadFile(name string) error {
 		nr, er := file.Read(buf)
 		if nr > 0 {
 			if err = u.SendStore(index, info, buf); err == nil {
-				log.Printf("upload %d piece success\n", index)
+				log.Printf("upload %d block success\n", index)
 				index += 1
 			} else {
 				return err

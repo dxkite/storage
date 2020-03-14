@@ -27,6 +27,6 @@ func init() {
 }
 
 func main() {
-	// Upload("./data/陈奕迅 - 十年.mp3")
+	Upload("./data/陈奕迅 - 十年.mp3")
 	Download("0d14a3da07c74efaee62f3ea495ce7de2e62c257", "data/download.mp3")
 }
