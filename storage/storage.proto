@@ -60,11 +60,12 @@ message DataResponse {
         URI = 1; // 下载URI
     }
     bytes hash = 1; // 总HASH
-    int64 block = 2; // 块大小
-    int64 size = 3; // 总大小
-    Type type = 4; // 块类型
-    Encode encode = 5; // 是否编码
-    repeated DataBlock blocks = 6; // 数据块
+    string name = 2; // 文件名
+    int64 block = 3; // 块大小
+    int64 size = 4; // 总大小
+    Type type = 5; // 块类型
+    Encode encode = 6; // 是否编码
+    repeated DataBlock blocks = 7; // 数据块
 }
 
 service GoStorage {

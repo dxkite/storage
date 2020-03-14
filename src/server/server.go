@@ -9,6 +9,8 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"log"
 	"os"
 	"path"
@@ -45,10 +47,7 @@ func (s *GoStorageServer) Hello(ctx context.Context, req *storage.PingRequest) (
 
 func (s *GoStorageServer) Create(ctx context.Context, req *storage.StorageCreateRequest) (*storage.StorageResponse, error) {
 	if len(req.Info) != 20 {
-		return &storage.StorageResponse{
-			Code:    storage.StorageResponse_ERROR_HASH,
-			Message: "error hash, need sha1 len 20",
-		}, nil
+		return nil, errors.New("error hash info")
 	}
 
 	m := meta.MetaInfo{
@@ -82,27 +81,19 @@ func (s *GoStorageServer) Create(ctx context.Context, req *storage.StorageCreate
 func (s *GoStorageServer) Store(ctx context.Context, req *storage.StorageStoreRequest) (*storage.StorageResponse, error) {
 
 	if len(req.Hash) != 20 {
-		return &storage.StorageResponse{
-			Code:    storage.StorageResponse_ERROR_HASH,
-			Message: "error hash, need sha1 len 20",
-		}, nil
+		return nil, errors.New("error hash info")
 	}
 
 	if len(req.Info) != 20 {
-		return &storage.StorageResponse{
-			Code:    storage.StorageResponse_ERROR_HASH,
-			Message: "error hash, need sha1 len 20",
-		}, nil
+		return nil, errors.New("error hash info")
 	}
 
 	f := path.Join(s.Root, fmt.Sprintf("%x.meta", req.Info))
 	m, e := meta.DecodeToFile(f)
 	if e != nil && e == os.ErrNotExist {
-		return &storage.StorageResponse{
-			Code:    storage.StorageResponse_ERROR_HASH,
-			Message: "unknown hash",
-		}, nil
+		return nil, status.Errorf(codes.NotFound, "file "+fmt.Sprintf("%x", req.Info)+" not found")
 	}
+
 	if e != nil {
 		return &storage.StorageResponse{
 			Code:    storage.StorageResponse_ERROR_UNKNOWN,
@@ -155,19 +146,12 @@ func (s *GoStorageServer) Store(ctx context.Context, req *storage.StorageStoreRe
 
 func (s *GoStorageServer) Finish(ctx context.Context, req *storage.StorageFinishRequest) (*storage.StorageResponse, error) {
 	if len(req.Info) != 20 {
-		return &storage.StorageResponse{
-			Code:    storage.StorageResponse_ERROR_HASH,
-			Message: "error hash, need sha1 len 20",
-		}, nil
+		return nil, errors.New("error hash info")
 	}
-
 	f := path.Join(s.Root, fmt.Sprintf("%x.meta", req.Info))
 	m, e := meta.DecodeToFile(f)
 	if e != nil && e == os.ErrNotExist {
-		return &storage.StorageResponse{
-			Code:    storage.StorageResponse_ERROR_HASH,
-			Message: "unknown hash",
-		}, nil
+		return nil, status.Errorf(codes.NotFound, "file "+fmt.Sprintf("%x", req.Info)+" not found")
 	}
 
 	if e != nil {
@@ -199,10 +183,13 @@ func (s *GoStorageServer) Get(ctx context.Context, req *storage.GetResponse) (*s
 	f := path.Join(s.Root, fmt.Sprintf("%x.meta", req.Info))
 	m, e := meta.DecodeToFile(f)
 	if e != nil && e == os.ErrNotExist {
-		return nil, errors.New("file " + fmt.Sprintf("%x.meta", req.Info) + " not found")
+		return nil, status.Errorf(codes.NotFound, "file "+fmt.Sprintf("%x", req.Info)+" not found")
 	}
 	if e != nil {
 		return nil, e
+	}
+	if m.Status != meta.Finish {
+		return nil, status.Errorf(codes.NotFound, "file "+fmt.Sprintf("%d:%x", m.Status, req.Info)+" not found")
 	}
 	log.Printf("get meta %x\n", req.Info)
 	return NewDataResponse(m), nil

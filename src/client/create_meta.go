@@ -10,6 +10,7 @@ func NewMeta(m *storage.DataResponse) *meta.MetaInfo {
 		Hash:      m.Hash,
 		BlockSize: m.Block,
 		Size:      m.Size,
+		Name:      m.Name,
 		Type:      int32(storage.DataResponse_URI),
 		Encode:    int32(storage.DataResponse_IMAGE),
 		Block:     CreateBlocks(m.Blocks),
