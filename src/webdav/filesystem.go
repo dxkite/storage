@@ -26,14 +26,14 @@ func (d FileSystem) resolve(name string) string {
 }
 
 func (d FileSystem) OpenFile(ctx context.Context, name string, flag int, perm os.FileMode) (webdav.File, error) {
-	n, m, _ := d.getRealName(name)
+	n, m, e := d.getRealName(name)
 	name = n
 	p := d.resolve(name)
 	f, err := d.Dir.OpenFile(ctx, name, flag, perm)
 	if err != nil {
 		return nil, err
 	}
-	return NewFile(f, p, m), nil
+	return NewFile(f, p, m, e), nil
 }
 
 func (d FileSystem) RemoveAll(ctx context.Context, name string) error {
@@ -59,14 +59,11 @@ func (d FileSystem) Stat(ctx context.Context, name string) (os.FileInfo, error) 
 
 func (d FileSystem) getRealName(name string) (string, bool, bool) {
 	p := d.resolve(name)
-
 	if FileExist(p + ".meta") {
 		return name + ".meta", true, FileExist(p)
 	}
-
 	if FileExist(p) {
 		return name, false, true
 	}
-
 	return p, false, false
 }

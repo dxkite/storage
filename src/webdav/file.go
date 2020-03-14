@@ -3,7 +3,6 @@ package webdav
 import (
 	"dxkite.cn/go-storage/src/meta"
 	"golang.org/x/net/webdav"
-	"log"
 	"os"
 	"path"
 	"strings"
@@ -15,6 +14,7 @@ type File struct {
 	webdav.File
 	Path   string
 	IsMeta bool
+	Exist  bool
 	real   ReadWriteCloseSeeker
 }
 
@@ -68,20 +68,22 @@ func WrapMetaFile(path string, f os.FileInfo) os.FileInfo {
 	return f
 }
 
-func NewFile(file webdav.File, path string, isMeta bool) File {
+func NewFile(file webdav.File, path string, isMeta bool, exist bool) File {
 	f := File{
 		File:   file,
 		Path:   path,
 		IsMeta: isMeta,
+		Exist:  exist,
 		real:   nil,
 	}
 	if isMeta {
-		prepareMetaStream(f)
+		prepareMetaStream(&f, exist)
 	}
 	return f
 }
 
 func (f File) Write(p []byte) (n int, err error) {
+	//log.Println("Write f.real", f.real, f.Path)
 	if f.real != nil {
 		return f.real.Write(p)
 	}
@@ -89,6 +91,7 @@ func (f File) Write(p []byte) (n int, err error) {
 }
 
 func (f File) Close() error {
+	//log.Println("Close f.real", f.real, f.Path)
 	if f.real != nil {
 		return f.real.Close()
 	}
@@ -96,6 +99,7 @@ func (f File) Close() error {
 }
 
 func (f File) Read(p []byte) (n int, err error) {
+	//log.Println("Read f.real", f.real, f.Path)
 	if f.real != nil {
 		return f.real.Read(p)
 	}
@@ -103,7 +107,11 @@ func (f File) Read(p []byte) (n int, err error) {
 }
 
 func (f File) Seek(offset int64, whence int) (int64, error) {
-	log.Println("Seek", f.Path, offset, whence)
+	//log.Println("Seek f.real", f.real, f.Path)
+	if f.real != nil {
+		//log.Println("Seek real", f.Path, offset, whence)
+		return f.real.Seek(offset, whence)
+	}
 	return f.File.Seek(offset, whence)
 }
 
@@ -112,10 +120,9 @@ func (f File) Stat() (os.FileInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	if IsMetaFile(fi) {
+	if f.IsMeta {
 		return WrapMetaFile(f.Path, fi), nil
 	}
-	//log.Println("Stat", fi)
 	return fi, err
 }
 

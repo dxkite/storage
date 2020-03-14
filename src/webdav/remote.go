@@ -19,9 +19,9 @@ type RemoteFile struct {
 	Meta     *meta.MetaInfo
 }
 
-func prepareMetaStream(file File) {
-	r := RealName(file.Path)
-	if FileExist(r) {
+func prepareMetaStream(file *File, exist bool) {
+	if exist {
+		r := RealName(file.Path)
 		f, err := os.OpenFile(r, os.O_RDWR, os.ModePerm)
 		if err == nil {
 			file.real = f
