@@ -89,7 +89,7 @@ func (d *Downloader) download(df string) error {
 }
 
 func (d *MetaDownloader) init(metaFile, p string) (string, error) {
-	m, er := meta.DecodeToFile(metaFile)
+	m, er := meta.DecodeFromFile(metaFile)
 	if er != nil {
 		return "", er
 	}

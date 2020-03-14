@@ -89,7 +89,7 @@ func (s *GoStorageServer) Store(ctx context.Context, req *storage.StorageStoreRe
 	}
 
 	f := path.Join(s.Root, fmt.Sprintf("%x.meta", req.Info))
-	m, e := meta.DecodeToFile(f)
+	m, e := meta.DecodeFromFile(f)
 	if e != nil && e == os.ErrNotExist {
 		return nil, status.Errorf(codes.NotFound, "file "+fmt.Sprintf("%x", req.Info)+" not found")
 	}
@@ -149,7 +149,7 @@ func (s *GoStorageServer) Finish(ctx context.Context, req *storage.StorageFinish
 		return nil, errors.New("error hash info")
 	}
 	f := path.Join(s.Root, fmt.Sprintf("%x.meta", req.Info))
-	m, e := meta.DecodeToFile(f)
+	m, e := meta.DecodeFromFile(f)
 	if e != nil && e == os.ErrNotExist {
 		return nil, status.Errorf(codes.NotFound, "file "+fmt.Sprintf("%x", req.Info)+" not found")
 	}
@@ -181,7 +181,7 @@ func (s *GoStorageServer) Get(ctx context.Context, req *storage.GetResponse) (*s
 		return nil, errors.New("error hash info")
 	}
 	f := path.Join(s.Root, fmt.Sprintf("%x.meta", req.Info))
-	m, e := meta.DecodeToFile(f)
+	m, e := meta.DecodeFromFile(f)
 	if e != nil && e == os.ErrNotExist {
 		return nil, status.Errorf(codes.NotFound, "file "+fmt.Sprintf("%x", req.Info)+" not found")
 	}

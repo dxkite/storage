@@ -52,7 +52,7 @@ func EncodeToFile(path string, info *MetaInfo) error {
 	return b.Encode(info)
 }
 
-func DecodeToFile(path string) (*MetaInfo, error) {
+func DecodeFromFile(path string) (*MetaInfo, error) {
 	f, er := os.OpenFile(path, os.O_RDONLY, os.ModePerm)
 	if er != nil {
 		return nil, er

@@ -9,7 +9,7 @@ import (
 )
 
 func TestDecodeToFile(t *testing.T) {
-	if d, der := DecodeToFile("test/a.meta"); der != nil {
+	if d, der := DecodeFromFile("test/a.meta"); der != nil {
 		t.Error(der)
 	} else {
 		h1, _ := hex.DecodeString("0d14a3da07c74efaee62f3ea495ce7de2e62c257")
@@ -70,7 +70,7 @@ func TestEnDecodeToFile(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if d, der := DecodeToFile("test/b.meta"); der != nil {
+	if d, der := DecodeFromFile("test/b.meta"); der != nil {
 		t.Error(der)
 	} else {
 		if reflect.DeepEqual(b, d) == false {
