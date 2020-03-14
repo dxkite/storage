@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -54,16 +55,20 @@ func (u *Uploader) UploadFile(name string) error {
 	u.Size = size
 	u.c = c
 	u.ctx = ctx
+	base := filepath.Base(file.Name())
 
-	if e := u.SendCreate(file.Name(), info, size); e != nil {
+	if e := u.SendCreate(base, info, size); e != nil {
 		return e
 	}
-	log.Println("created")
+
+	log.Printf("remote id %x for file %s created\n", info, base)
+
 	var buf = make([]byte, r.Block)
 	var index = int64(0)
 	for {
 		nr, er := file.Read(buf)
 		if nr > 0 {
+			log.Printf("uploading %d block\n", index)
 			if err = u.SendStore(index, info, buf); err == nil {
 				log.Printf("upload %d block success\n", index)
 				index += 1

@@ -13,6 +13,7 @@ func NewDataResponse(m *meta.MetaInfo) *storage.DataResponse {
 		Hash:   m.Hash,
 		Block:  m.BlockSize,
 		Size:   m.Size,
+		Name:   m.Name,
 		Type:   storage.DataResponse_URI,
 		Encode: storage.DataResponse_IMAGE,
 		Blocks: CreateBlocks(m.Block),

@@ -3,6 +3,7 @@ package main
 import (
 	"dxkite.cn/go-storage/src/server"
 	"dxkite.cn/go-storage/storage"
+	"flag"
 	"google.golang.org/grpc"
 	"log"
 	"net"
@@ -13,8 +14,20 @@ func init() {
 }
 
 func main() {
-	s := server.New("./data", 2*1024*1024)
-	lis, err := net.Listen("tcp", ":8080")
+
+	var blockSize = flag.Int("size", 2*1024*1024, "block size")
+	var path = flag.String("data", "./data", "data path")
+	var addr = flag.String("listen", ":20214", "listening")
+	var help = flag.Bool("help", false, "print help info")
+
+	flag.Parse()
+	if *help {
+		flag.Usage()
+		return
+	}
+
+	s := server.New(*path, int64(*blockSize))
+	lis, err := net.Listen("tcp", *addr)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}

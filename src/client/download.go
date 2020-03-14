@@ -14,6 +14,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path"
 	"sync"
 	"time"
 )
@@ -55,15 +56,18 @@ func (d *Downloader) DownloadToFile(path string) error {
 	return nil
 }
 
-func (d *Downloader) init(path string) (string, error) {
-	df := path + ".gs-downloading"
+func (d *Downloader) init(p string) (string, error) {
+	_ = os.MkdirAll(p, os.ModePerm)
+	df := path.Join(p, fmt.Sprintf("%x.gs-downloading", d.Info))
+
 	if FileExist(df) {
+		log.Println("reload meta info")
 		dd, err := DecodeToFile(df)
 		if err != nil {
 			return df, errors.New(fmt.Sprintf("reload downloading: %v", err))
 		}
 		d.DownloadMeta = *dd
-		file, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, os.ModePerm)
+		file, err := os.OpenFile(path.Join(p, d.Meta.Name), os.O_CREATE|os.O_RDWR, os.ModePerm)
 		if err != nil {
 			return df, err
 		}
@@ -72,17 +76,20 @@ func (d *Downloader) init(path string) (string, error) {
 			Hash: d.Info,
 		}
 	} else {
+		log.Println("downloading meta info")
 		m, er := d.getMeta()
 		if er != nil {
 			return df, er
 		}
+
 		d.BlockSize = m.Block
 		d.Size = m.Size
 		d.Index = bitset.New(int64(len(m.Blocks)))
 		d.Meta = NewMeta(m)
 		d.DownloadTotal = len(m.Blocks)
 		d.Downloaded = 0
-		file, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.ModePerm)
+		log.Println("create file", path.Join(p, d.Meta.Name))
+		file, err := os.OpenFile(path.Join(p, d.Meta.Name), os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.ModePerm)
 		if err != nil {
 			return df, err
 		}
@@ -127,7 +134,7 @@ func (r *DownloadRetryable) downloadBlock(dataBlock *meta.DataBlock) (block.Bloc
 		r.try--
 		// 可重试
 		if r.try > 0 {
-			log.Printf("- block %d download error: %v, retry", dataBlock.Index, err)
+			log.Printf("block %d download error: %v, retry", dataBlock.Index, err)
 			return r.downloadBlock(dataBlock)
 		}
 		return nil, err
