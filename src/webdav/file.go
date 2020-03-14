@@ -13,13 +13,14 @@ const MetaSuffix = ".meta"
 
 type File struct {
 	webdav.File
-	Path string
+	Path   string
+	IsMeta bool
+	real   ReadWriteCloseSeeker
 }
 
 type MetaFileInfo struct {
 	os.FileInfo
 	name string
-	size int64
 	Meta *meta.MetaInfo
 }
 
@@ -61,25 +62,48 @@ func WrapMetaFile(path string, f os.FileInfo) os.FileInfo {
 		return MetaFileInfo{
 			FileInfo: f,
 			name:     n,
-			size:     m.Size,
 			Meta:     m,
 		}
 	}
 	return f
 }
 
+func NewFile(file webdav.File, path string, isMeta bool) File {
+	f := File{
+		File:   file,
+		Path:   path,
+		IsMeta: isMeta,
+		real:   nil,
+	}
+	if isMeta {
+		prepareMetaStream(f)
+	}
+	return f
+}
+
 func (f File) Write(p []byte) (n int, err error) {
-	log.Println("write byte for", f.Path)
+	if f.real != nil {
+		return f.real.Write(p)
+	}
 	return f.File.Write(p)
 }
 
+func (f File) Close() error {
+	if f.real != nil {
+		return f.real.Close()
+	}
+	return f.File.Close()
+}
+
 func (f File) Read(p []byte) (n int, err error) {
-	log.Println("read byte from", f.Path)
+	if f.real != nil {
+		return f.real.Read(p)
+	}
 	return f.File.Read(p)
 }
 
 func (f File) Seek(offset int64, whence int) (int64, error) {
-	log.Println("seek for", f.Path, offset, whence)
+	log.Println("Seek", f.Path, offset, whence)
 	return f.File.Seek(offset, whence)
 }
 
@@ -96,13 +120,11 @@ func (f File) Stat() (os.FileInfo, error) {
 }
 
 func (f MetaFileInfo) Name() string {
-	//log.Println("Get Name", f.FileInfo.Name(), f.name)
 	return f.name
 }
 
 func (f MetaFileInfo) Size() int64 {
-	//log.Println("Get Size", f.size)
-	return f.size
+	return f.Meta.Size
 }
 
 func (MetaFileInfo) Sys() interface{} {
