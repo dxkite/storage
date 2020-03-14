@@ -9,7 +9,7 @@ import (
 
 func Upload(path string) {
 	u := client.NewUploader("127.0.0.1:8080", time.Second*100)
-	if er := u.UploadFile("./data/陈奕迅 - 十年.mp3"); er != nil {
+	if er := u.UploadFile(path); er != nil {
 		log.Fatal("upload error:", er)
 	}
 }

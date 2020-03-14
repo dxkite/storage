@@ -89,7 +89,7 @@ func (d *Downloader) init(path string) (string, error) {
 		}
 		d.BlockSize = m.Block
 		d.Size = m.Size
-		d.Index = bitset.New(m.Size)
+		d.Index = bitset.New(int64(len(m.Blocks)))
 		d.Meta = NewMeta(m)
 		d.DownloadTotal = len(m.Blocks)
 		d.Downloaded = 0
