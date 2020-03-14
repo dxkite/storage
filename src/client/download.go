@@ -55,6 +55,9 @@ func (d *RemoteDownloader) DownloadToFile(path string) error {
 	if err != nil {
 		return err
 	}
+	if er := d.download(df); er == nil {
+		_ = os.Remove(df)
+	}
 	return d.download(df)
 }
 
@@ -63,7 +66,10 @@ func (d *MetaDownloader) DownloadToFile(path string) error {
 	if err != nil {
 		return err
 	}
-	return d.download(df)
+	if er := d.download(df); er == nil {
+		_ = os.Remove(df)
+	}
+	return nil
 }
 
 func (d *Downloader) download(df string) error {
@@ -147,12 +153,10 @@ func (d *RemoteDownloader) init(p string) (string, error) {
 		if er != nil {
 			return df, er
 		}
-
 		d.MetaInfo = *NewMeta(m)
 		d.Index = bitset.New(int64(len(m.Blocks)))
 		d.DownloadTotal = len(m.Blocks)
 		d.Downloaded = 0
-
 		log.Println("create file", path.Join(p, d.Name))
 		file, err := os.OpenFile(path.Join(p, d.Name), os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.ModePerm)
 		if err != nil {
@@ -195,6 +199,13 @@ func (r *DownloadRetryable) downloadBlock(dataBlock *meta.DataBlock) (block.Bloc
 		retry = true
 		err = er
 	}
+
+	bh := ByteHash(buf)
+	if bytes.Equal(bh, dataBlock.Hash) == false {
+		err = errors.New("hash check error")
+		retry = true
+	}
+
 	if retry {
 		r.try--
 		// 可重试
@@ -204,32 +215,11 @@ func (r *DownloadRetryable) downloadBlock(dataBlock *meta.DataBlock) (block.Bloc
 		}
 		return nil, err
 	}
+
 	log.Printf("block %d dwonloaded", dataBlock.Index)
 	start, end := r.d.calculateRange(dataBlock.Index)
 	block.NewBlock(start, end, buf)
 	return block.NewBlock(start, end, buf), err
-}
-
-func (d *Downloader) downloadBlock(df string, dataBlock *meta.DataBlock) error {
-	log.Printf("[%.2f%%] block %d downloading", float64(d.Downloaded)*100/float64(d.DownloadTotal), dataBlock.Index)
-	dr := DownloadRetryable{5, d}
-	bb, er := dr.downloadBlock(dataBlock)
-	if er != nil {
-		return er
-	}
-	if bb != nil {
-		if wer := d.File.WriteBlock(bb); wer != nil {
-			return wer
-		}
-		// 标记下载
-		d.Downloaded++
-		d.Index.Set(dataBlock.Index)
-		log.Printf("[%.2f%%] block %d downloaded", float64(d.Downloaded)*100/float64(d.DownloadTotal), dataBlock.Index)
-		if wer := EncodeToFile(df, &d.DownloadMeta); wer != nil {
-			return wer
-		}
-	}
-	return nil
 }
 
 func (d *RemoteDownloader) getMeta() (*storage.DataResponse, error) {
@@ -257,13 +247,26 @@ func (d *Downloader) calculateRange(index int64) (begin, end int64) {
 	return begin, end
 }
 
-func (d *Downloader) createBlock(index int64, info []byte, url string) (block.Block, error) {
-	b, err := GetRemoteData(url)
-	if err != nil {
-		return nil, err
+func (d *Downloader) downloadBlock(df string, dataBlock *meta.DataBlock) error {
+	log.Printf("[%.2f%%] block %d downloading", float64(d.Downloaded)*100/float64(d.DownloadTotal), dataBlock.Index)
+	dr := DownloadRetryable{5, d}
+	bb, er := dr.downloadBlock(dataBlock)
+	if er != nil {
+		return er
 	}
-	start, end := d.calculateRange(index)
-	return block.NewBlock(start, end, b), nil
+	if bb != nil {
+		if wer := d.File.WriteBlock(bb); wer != nil {
+			return wer
+		}
+		// 标记下载
+		d.Downloaded++
+		d.Index.Set(dataBlock.Index)
+		log.Printf("[%.2f%%] block %d downloaded", float64(d.Downloaded)*100/float64(d.DownloadTotal), dataBlock.Index)
+		if wer := EncodeToFile(df, &d.DownloadMeta); wer != nil {
+			return wer
+		}
+	}
+	return nil
 }
 
 func GetRemoteData(url string) ([]byte, error) {
