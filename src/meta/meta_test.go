@@ -28,12 +28,12 @@ func TestDecodeToFile(t *testing.T) {
 				{
 					Index: 0,
 					Hash:  h2,
-					Data:  []byte("https://ae01.alicdn.com/kf/U35964219314041c59f69b12734ca9a48Y.png"),
+					Data:  []byte("https://ae01.alicdn.com/kf/U970f381e47dd4ef3a502f11ad574ee4ei.png"),
 				},
 				{
 					Index: 1,
 					Hash:  h3,
-					Data:  []byte("https://ae01.alicdn.com/kf/U15af73c0c9da4a93b44c6abd6f7642e52.png"),
+					Data:  []byte("https://ae01.alicdn.com/kf/U6f5fedea92c0464a846f72a420050280t.png"),
 				},
 			},
 		}
@@ -46,7 +46,6 @@ func TestDecodeToFile(t *testing.T) {
 			fmt.Printf("block %d hash %x\n", b.Index, b.Hash)
 			fmt.Printf("block %d link %s\n", b.Index, string(b.Data))
 		}
-
 		if reflect.DeepEqual(r, d) == false {
 			t.Errorf("want %v got %v\n", r, d)
 		}
