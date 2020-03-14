@@ -43,7 +43,7 @@ func (m *MetaInfo) AppendBlock(b *DataBlock) {
 }
 
 func EncodeToFile(path string, info *MetaInfo) error {
-	f, er := os.OpenFile(path, os.O_CREATE|os.O_WRONLY, os.ModePerm)
+	f, er := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.ModePerm)
 	if er != nil {
 		return er
 	}
