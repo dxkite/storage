@@ -1,4 +1,4 @@
-package encoding
+package image
 
 import (
 	"bytes"
@@ -116,11 +116,8 @@ func getSize(size int) (w, h int) {
 	return int(math.Ceil(d)), int(math.Ceil(d))
 }
 
-type Encoder struct {
-}
-
 // 解码
-func (*Encoder) Decode(r io.Reader, w io.Writer) error {
+func Decode(r io.Reader, w io.Writer) error {
 	i, err := png.Decode(r)
 	if err != nil {
 		return err
@@ -138,7 +135,7 @@ func (*Encoder) Decode(r io.Reader, w io.Writer) error {
 }
 
 // 编码
-func (*Encoder) Encode(w io.Writer, r io.Reader) error {
+func Encode(w io.Writer, r io.Reader) error {
 	p := NewEncoder(1024)
 	if _, err := io.Copy(p, r); err != nil {
 		return err
@@ -151,8 +148,7 @@ func (*Encoder) Encode(w io.Writer, r io.Reader) error {
 func EncodeByte(input []byte) ([]byte, error) {
 	i := bytes.NewBuffer(input)
 	o := &bytes.Buffer{}
-	e := Encoder{}
-	err := e.Encode(o, i)
+	err := Encode(o, i)
 	if err != nil {
 		return nil, err
 	}
@@ -163,8 +159,7 @@ func EncodeByte(input []byte) ([]byte, error) {
 func DecodeByte(input []byte) ([]byte, error) {
 	i := bytes.NewBuffer(input)
 	o := &bytes.Buffer{}
-	e := Encoder{}
-	err := e.Decode(i, o)
+	err := Decode(i, o)
 	if err != nil {
 		return nil, err
 	}

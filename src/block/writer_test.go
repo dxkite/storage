@@ -9,7 +9,7 @@ import (
 func TestBlockFile_WriteRange(t *testing.T) {
 	var r1 = []byte("hello world")
 	var r2 = []byte(", this is the test")
-	var r3 = []byte(" range file")
+	var r3 = []byte(" range File")
 
 	var data = r1
 	data = append(data, r2...)
@@ -23,7 +23,7 @@ func TestBlockFile_WriteRange(t *testing.T) {
 
 	var block = BlockFile{
 		Hash: hash,
-		file: file,
+		File: file,
 	}
 
 	if err := block.WriteBlock(NewBlock(int64(len(r1)), int64(len(r1)+len(r2)), r2)); err != nil {

@@ -1,7 +1,7 @@
 package server
 
 import (
-	"dxkite.cn/go-storage/lib/meta"
+	"dxkite.cn/go-storage/src/meta"
 	"dxkite.cn/go-storage/storage"
 )
 

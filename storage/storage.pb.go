@@ -251,7 +251,7 @@ func (m *StorageCreateRequest) GetName() string {
 
 type StorageStoreRequest struct {
 	Info                 []byte   `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
-	Index                int64    `protobuf:"varint,2,opt,name=index,proto3" json:"index,omitempty"`
+	Index                int64    `protobuf:"varint,2,opt,name=bitset,proto3" json:"bitset,omitempty"`
 	Data                 []byte   `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`
 	Hash                 []byte   `protobuf:"bytes,4,opt,name=hash,proto3" json:"hash,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -439,7 +439,7 @@ func (m *GetResponse) GetInfo() []byte {
 
 type DataBlock struct {
 	Hash                 []byte   `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
-	Index                int64    `protobuf:"varint,2,opt,name=index,proto3" json:"index,omitempty"`
+	Index                int64    `protobuf:"varint,2,opt,name=bitset,proto3" json:"bitset,omitempty"`
 	Data                 []byte   `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`

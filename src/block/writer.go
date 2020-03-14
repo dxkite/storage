@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sync"
 )
 
 var (
@@ -13,27 +14,28 @@ var (
 )
 
 type BlockFile struct {
-	file io.ReadWriteSeeker // 文件
+	File io.ReadWriteSeeker // 文件
 	Hash []byte             // 文件HASH
+	lock sync.Mutex
 }
 
 type block struct {
 	start int64
 	end   int64
-	data  []byte
+	bytes []byte
 }
 
 type Block interface {
 	Start() int64
 	End() int64
-	Data() []byte
+	Bytes() []byte
 }
 
 func NewBlock(start, end int64, data []byte) Block {
 	return &block{
 		start: start,
 		end:   end,
-		data:  data,
+		bytes: data,
 	}
 }
 
@@ -43,23 +45,25 @@ func (b *block) Start() int64 {
 func (b *block) End() int64 {
 	return b.end
 }
-func (b *block) Data() []byte {
-	return b.data
+func (b *block) Bytes() []byte {
+	return b.bytes
 }
 
 func (b *BlockFile) WriteBlock(c Block) error {
+	b.lock.Lock()
+	defer b.lock.Unlock()
 	l := c.End() - c.Start()
-	if l != int64(len(c.Data())) {
+	if l > int64(len(c.Bytes())) {
 		return io.ErrShortBuffer
 	}
-	if s, err := b.file.Seek(int64(c.Start()), io.SeekStart); err != nil {
+	if s, err := b.File.Seek(c.Start(), io.SeekStart); err != nil {
 		return err
 	} else {
 		if int64(s) != c.Start() {
 			return errorSeek
 		}
 	}
-	if n, err := b.file.Write(c.Data()[:l]); err != nil {
+	if n, err := b.File.Write(c.Bytes()[:l]); err != nil {
 		return err
 	} else {
 		if int64(n) != l {
@@ -71,8 +75,8 @@ func (b *BlockFile) WriteBlock(c Block) error {
 
 func (b *BlockFile) CheckSum() bool {
 	h := sha1.New()
-	_, _ = b.file.Seek(0, io.SeekStart)
-	_, err := io.Copy(h, b.file)
+	_, _ = b.File.Seek(0, io.SeekStart)
+	_, err := io.Copy(h, b.File)
 	if err != nil {
 		panic(fmt.Sprintf("check sum: %v", err))
 	}

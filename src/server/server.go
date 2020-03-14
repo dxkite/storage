@@ -2,10 +2,10 @@ package server
 
 import (
 	"context"
-	"dxkite.cn/go-storage/lib/encoding"
-	"dxkite.cn/go-storage/lib/meta"
+	"dxkite.cn/go-storage/src/image"
+	"dxkite.cn/go-storage/src/meta"
+	"dxkite.cn/go-storage/src/upload"
 	"dxkite.cn/go-storage/storage"
-	"dxkite.cn/go-storage/upload"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -103,7 +103,6 @@ func (s *GoStorageServer) Store(ctx context.Context, req *storage.StorageStoreRe
 			Message: "unknown hash",
 		}, nil
 	}
-
 	if e != nil {
 		return &storage.StorageResponse{
 			Code:    storage.StorageResponse_ERROR_UNKNOWN,
@@ -112,7 +111,7 @@ func (s *GoStorageServer) Store(ctx context.Context, req *storage.StorageStoreRe
 	}
 	log.Printf("store meta %s index %d\n", f, req.Index)
 	// 编码成图片
-	b, eer := encoding.EncodeByte(req.Data)
+	b, eer := image.EncodeByte(req.Data)
 	if eer != nil {
 		return &storage.StorageResponse{
 			Code:    storage.StorageResponse_ERROR_UNKNOWN,
@@ -195,7 +194,7 @@ func (s *GoStorageServer) Finish(ctx context.Context, req *storage.StorageFinish
 
 func (s *GoStorageServer) Get(ctx context.Context, req *storage.GetResponse) (*storage.DataResponse, error) {
 	if len(req.Info) != 20 {
-		return nil, nil
+		return nil, errors.New("error hash info")
 	}
 	f := path.Join(s.Root, fmt.Sprintf("%x.meta", req.Info))
 	m, e := meta.DecodeToFile(f)
@@ -205,5 +204,6 @@ func (s *GoStorageServer) Get(ctx context.Context, req *storage.GetResponse) (*s
 	if e != nil {
 		return nil, e
 	}
+	log.Printf("get meta %x\n", req.Info)
 	return NewDataResponse(m), nil
 }

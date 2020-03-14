@@ -7,17 +7,41 @@ import (
 	"google.golang.org/grpc"
 	"io"
 	"log"
+	"os"
 	"time"
 )
 
-func UploadFile(remote, name string, file io.ReadSeeker) error {
-	conn, err := grpc.Dial(remote, grpc.WithInsecure(), grpc.WithBlock())
+type Uploader struct {
+	Info    []byte
+	Path    string
+	Size    int64
+	Remote  string
+	Timeout time.Duration
+
+	c   storage.GoStorageClient
+	ctx context.Context
+}
+
+func NewUploader(remote string, time time.Duration) *Uploader {
+	return &Uploader{
+		Remote:  remote,
+		Timeout: time,
+	}
+}
+
+func (u *Uploader) UploadFile(name string) error {
+	file, oer := os.OpenFile(name, os.O_RDONLY, os.ModePerm)
+	if oer != nil {
+		return oer
+	}
+
+	conn, err := grpc.Dial(u.Remote, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
 	defer func() { _ = conn.Close() }()
 	c := storage.NewGoStorageClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*100)
+	ctx, cancel := context.WithTimeout(context.Background(), u.Timeout)
 	defer cancel()
 	r, er := c.Hello(ctx, &storage.PingRequest{})
 	if er != nil {
@@ -25,7 +49,13 @@ func UploadFile(remote, name string, file io.ReadSeeker) error {
 	}
 	var info = SteamHash(file)
 	var size = SteamSize(file)
-	if e := SendCreate(c, ctx, name, info, size); e != nil {
+
+	u.Info = info
+	u.Size = size
+	u.c = c
+	u.ctx = ctx
+
+	if e := u.SendCreate(file.Name(), info, size); e != nil {
 		return e
 	}
 	log.Println("created")
@@ -34,7 +64,7 @@ func UploadFile(remote, name string, file io.ReadSeeker) error {
 	for {
 		nr, er := file.Read(buf)
 		if nr > 0 {
-			if err = SendStore(c, ctx, index, info, buf); err == nil {
+			if err = u.SendStore(index, info, buf); err == nil {
 				log.Printf("upload %d piece success\n", index)
 				index += 1
 			} else {
@@ -51,15 +81,15 @@ func UploadFile(remote, name string, file io.ReadSeeker) error {
 	if err != nil {
 		return err
 	}
-	if e := SendFinish(c, ctx, info); e != nil {
+	if e := u.SendFinish(info); e != nil {
 		return e
 	}
 	log.Println("finished")
 	return nil
 }
 
-func SendCreate(c storage.GoStorageClient, ctx context.Context, name string, info []byte, size int64) error {
-	sr, er := c.Create(ctx, &storage.StorageCreateRequest{
+func (u *Uploader) SendCreate(name string, info []byte, size int64) error {
+	sr, er := u.c.Create(u.ctx, &storage.StorageCreateRequest{
 		Info: info,
 		Size: size,
 		Name: name,
@@ -73,8 +103,8 @@ func SendCreate(c storage.GoStorageClient, ctx context.Context, name string, inf
 	return nil
 }
 
-func SendStore(c storage.GoStorageClient, ctx context.Context, index int64, info, data []byte) error {
-	sr, er := c.Store(ctx, &storage.StorageStoreRequest{
+func (u *Uploader) SendStore(index int64, info, data []byte) error {
+	sr, er := u.c.Store(u.ctx, &storage.StorageStoreRequest{
 		Info:  info,
 		Hash:  ByteHash(data),
 		Data:  data,
@@ -89,8 +119,8 @@ func SendStore(c storage.GoStorageClient, ctx context.Context, index int64, info
 	return nil
 }
 
-func SendFinish(c storage.GoStorageClient, ctx context.Context, info []byte) error {
-	sr, er := c.Finish(ctx, &storage.StorageFinishRequest{
+func (u *Uploader) SendFinish(info []byte) error {
+	sr, er := u.c.Finish(u.ctx, &storage.StorageFinishRequest{
 		Info: info,
 	})
 	if er != nil {

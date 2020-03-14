@@ -1,12 +1,16 @@
 package main
 
 import (
-	"dxkite.cn/go-storage/lib/server"
+	"dxkite.cn/go-storage/src/server"
 	"dxkite.cn/go-storage/storage"
 	"google.golang.org/grpc"
 	"log"
 	"net"
 )
+
+func init() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+}
 
 func main() {
 	s := server.New("./data", 2*1024*1024)
