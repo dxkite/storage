@@ -131,7 +131,7 @@ func (d *MetaDownloader) init(metaFile, p string) (string, error) {
 func (d *RemoteDownloader) init(p string) (string, error) {
 	_ = os.MkdirAll(p, os.ModePerm)
 	df := path.Join(p, fmt.Sprintf("%x.gs-downloading", d.Hash))
-
+	var f int
 	if FileExist(df) {
 		log.Println("reload meta info")
 		dd, err := DecodeToFile(df)
@@ -139,14 +139,7 @@ func (d *RemoteDownloader) init(p string) (string, error) {
 			return df, errors.New(fmt.Sprintf("reload downloading: %v", err))
 		}
 		d.DownloadMeta = *dd
-		file, err := os.OpenFile(path.Join(p, d.Name), os.O_CREATE|os.O_RDWR, os.ModePerm)
-		if err != nil {
-			return df, err
-		}
-		d.File = &block.BlockFile{
-			File: file,
-			Hash: d.Hash,
-		}
+		f = os.O_CREATE | os.O_RDWR
 	} else {
 		log.Println("downloading meta info")
 		m, er := d.getMeta()
@@ -157,14 +150,16 @@ func (d *RemoteDownloader) init(p string) (string, error) {
 		d.Index = bitset.New(int64(len(m.Blocks)))
 		d.DownloadTotal = len(m.Blocks)
 		d.Downloaded = 0
-		log.Println("create file", path.Join(p, d.Name))
-		file, err := os.OpenFile(path.Join(p, d.Name), os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.ModePerm)
+		f = os.O_CREATE | os.O_RDWR | os.O_TRUNC
+	}
+	if d.File == nil {
+		file, err := os.OpenFile(path.Join(p, d.Name), f, os.ModePerm)
 		if err != nil {
 			return df, err
 		}
 		d.File = &block.BlockFile{
 			File: file,
-			Hash: m.Hash,
+			Hash: d.Hash,
 		}
 	}
 	return df, nil

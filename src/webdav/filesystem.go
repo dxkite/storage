@@ -2,14 +2,86 @@ package webdav
 
 import (
 	"context"
+	"dxkite.cn/go-storage/src/client"
+	"encoding/hex"
 	"golang.org/x/net/webdav"
+	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 )
 
 type FileSystem struct {
 	webdav.Dir
+	MetaRoot   string
+	ObjectRoot string
+	UploadRoot string
+}
+
+func NewSystem(root string) FileSystem {
+	idx := path.Join(root, ".go-storage", "index")
+	fs := FileSystem{
+		Dir:        webdav.Dir(path.Join(root, ".go-storage", "index")),
+		MetaRoot:   path.Join(root, ".go-storage", "meta"),
+		ObjectRoot: path.Join(root, ".go-storage", "object"),
+		UploadRoot: path.Join(root, ".go-storage", "upload"),
+	}
+	_ = os.MkdirAll(idx, os.ModePerm)
+	_ = os.MkdirAll(fs.MetaRoot, os.ModePerm)
+	_ = os.MkdirAll(fs.ObjectRoot, os.ModePerm)
+	_ = os.MkdirAll(fs.UploadRoot, os.ModePerm)
+	return fs
+}
+
+func (d FileSystem) OpenFile(ctx context.Context, name string, flag int, perm os.FileMode) (webdav.File, error) {
+	n, exist := d.getNameIndex(name)
+	var t string
+	var rf string
+
+	if exist {
+		// 打开存在文件
+		name = d.resolve(n)
+		log.Println("open file", name)
+		rf = name
+	} else {
+		// 打开一个不存在的文件
+		nn := hex.EncodeToString(client.ByteHash([]byte(name)))
+		t = path.Join(d.UploadRoot, nn)
+		name = d.resolve(n)
+		log.Println("new file", n, "real", name, "save", t)
+		rf = t
+	}
+
+	f, err := os.OpenFile(rf, flag, perm)
+	if err != nil {
+		return nil, err
+	}
+	return NewRemoteFile(d, name, t, f), nil
+}
+
+func (d FileSystem) RemoveAll(ctx context.Context, name string) error {
+	metaName, _ := d.getNameIndex(name)
+	return d.Dir.RemoveAll(ctx, metaName)
+}
+
+func (d FileSystem) Rename(ctx context.Context, oldName, newName string) error {
+	oldMetaName, _ := d.getNameIndex(oldName)
+	newName = newName + IndexSuffix
+	return d.Dir.Rename(ctx, oldMetaName, newName)
+}
+
+func (d FileSystem) Stat(ctx context.Context, name string) (os.FileInfo, error) {
+	name, _ = d.getNameIndex(name)
+	return d.Dir.Stat(ctx, name)
+}
+
+func (d FileSystem) getNameIndex(name string) (string, bool) {
+	p := d.resolve(name)
+	if IsDir(p) {
+		return name, true
+	}
+	return name + IndexSuffix, FileExist(p + IndexSuffix)
 }
 
 func (d FileSystem) resolve(name string) string {
@@ -25,45 +97,9 @@ func (d FileSystem) resolve(name string) string {
 	return filepath.Join(dir, filepath.FromSlash(slashClean(name)))
 }
 
-func (d FileSystem) OpenFile(ctx context.Context, name string, flag int, perm os.FileMode) (webdav.File, error) {
-	n, m, e := d.getRealName(name)
-	name = n
-	p := d.resolve(name)
-	f, err := d.Dir.OpenFile(ctx, name, flag, perm)
-	if err != nil {
-		return nil, err
+func slashClean(name string) string {
+	if name == "" || name[0] != '/' {
+		name = "/" + name
 	}
-	return NewFile(f, p, m, e), nil
-}
-
-func (d FileSystem) RemoveAll(ctx context.Context, name string) error {
-	name, _, _ = d.getRealName(name)
-	return d.Dir.RemoveAll(ctx, name)
-}
-
-func (d FileSystem) Rename(ctx context.Context, oldName, newName string) error {
-	oldMetaName, isMeta, exist := d.getRealName(oldName)
-	if isMeta {
-		if exist {
-			_ = d.Dir.Rename(ctx, oldName, newName)
-		}
-		newName = newName + MetaSuffix
-	}
-	return d.Dir.Rename(ctx, oldMetaName, newName)
-}
-
-func (d FileSystem) Stat(ctx context.Context, name string) (os.FileInfo, error) {
-	name, _, _ = d.getRealName(name)
-	return d.Dir.Stat(ctx, name)
-}
-
-func (d FileSystem) getRealName(name string) (string, bool, bool) {
-	p := d.resolve(name)
-	if FileExist(p + ".meta") {
-		return name + ".meta", true, FileExist(p)
-	}
-	if FileExist(p) {
-		return name, false, true
-	}
-	return p, false, false
+	return path.Clean(name)
 }

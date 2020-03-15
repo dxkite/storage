@@ -5,14 +5,17 @@ import (
 	"os"
 )
 
+type Status int
+
 const (
-	Create int = iota
+	Create Status = iota
 	Uploading
 	Finish
+	Local
 )
 
 type MetaInfo struct {
-	Status    int
+	Status    Status
 	Hash      []byte
 	Name      string
 	Size      int64

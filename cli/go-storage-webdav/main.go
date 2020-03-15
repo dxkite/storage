@@ -7,9 +7,13 @@ import (
 	"net/http"
 )
 
+func init() {
+	log.SetFlags(log.LstdFlags | log.Llongfile)
+}
+
 func main() {
 	if err := http.ListenAndServe(":20214", &webdav.Handler{
-		FileSystem: dav.FileSystem{Dir: "./data"},
+		FileSystem: dav.NewSystem("./data"),
 		LockSystem: webdav.NewMemLS(),
 	}); err != nil {
 		log.Fatal(err)
