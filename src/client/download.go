@@ -25,6 +25,7 @@ type Downloader struct {
 type MetaDownloader struct {
 	Downloader
 	MetaPath string
+	MetaInfo meta.Info
 }
 
 type RemoteDownloader struct {

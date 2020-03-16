@@ -24,7 +24,7 @@ type RemoteFile struct {
 	webdav.File
 	Path  string
 	Index *IndexFile
-	Meta  *meta.MetaInfo
+	Meta  *meta.Info
 
 	fs      FileSystem
 	newFile bool

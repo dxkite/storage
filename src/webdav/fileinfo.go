@@ -8,7 +8,7 @@ import (
 type RemoteFileInfo struct {
 	os.FileInfo
 	name string
-	Meta *meta.MetaInfo
+	Meta *meta.Info
 }
 
 func (f RemoteFileInfo) Name() string {

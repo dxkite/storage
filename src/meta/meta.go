@@ -25,7 +25,7 @@ const (
 	Type_Stream
 )
 
-type MetaInfo struct {
+type Info struct {
 	Status    Status      `bencode:"status"`
 	Hash      []byte      `bencode:"hash"`
 	Name      string      `bencode:"name"`
@@ -42,7 +42,7 @@ type DataBlock struct {
 	Data  []byte `bencode:"data"`
 }
 
-func (m *MetaInfo) AppendBlock(b *DataBlock) {
+func (m *Info) AppendBlock(b *DataBlock) {
 	if m.Block == nil {
 		m.Block = []DataBlock{*b}
 		return
@@ -56,7 +56,7 @@ func (m *MetaInfo) AppendBlock(b *DataBlock) {
 	m.Block = append(m.Block, *b)
 }
 
-func EncodeToFile(path string, info *MetaInfo) error {
+func EncodeToFile(path string, info *Info) error {
 	f, er := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.ModePerm)
 	if er != nil {
 		return er
@@ -66,13 +66,13 @@ func EncodeToFile(path string, info *MetaInfo) error {
 	return b.Encode(info)
 }
 
-func DecodeFromFile(path string) (*MetaInfo, error) {
+func DecodeFromFile(path string) (*Info, error) {
 	f, er := os.OpenFile(path, os.O_RDONLY, os.ModePerm)
 	if er != nil {
 		return nil, er
 	}
 	b := bencode.NewDecoder(f)
-	info := new(MetaInfo)
+	info := new(Info)
 	der := b.Decode(&info)
 	if der != nil {
 		return nil, der

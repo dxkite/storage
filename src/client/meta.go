@@ -8,7 +8,7 @@ import (
 )
 
 type DownloadMeta struct {
-	meta.MetaInfo
+	meta.Info
 	Index         bitset.BitSet
 	Downloaded    int
 	DownloadTotal int

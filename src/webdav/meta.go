@@ -4,8 +4,8 @@ import (
 	"dxkite.cn/go-storage/src/meta"
 )
 
-func NewLocalMeta(name string, hash []byte, size int64) *meta.MetaInfo {
-	r := &meta.MetaInfo{
+func NewLocalMeta(name string, hash []byte, size int64) *meta.Info {
+	r := &meta.Info{
 		Hash:      hash,
 		BlockSize: 0,
 		Size:      size,

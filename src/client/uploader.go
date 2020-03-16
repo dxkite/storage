@@ -23,7 +23,7 @@ type Uploader struct {
 
 type UploadInfo struct {
 	Index bitset.BitSet
-	Meta  *meta.MetaInfo
+	Meta  *meta.Info
 }
 
 func NewUploader(bs int64, t string) *Uploader {
@@ -118,7 +118,7 @@ func (u *Uploader) GetUploadInfo(name string, size, block int64, info []byte) *U
 			return ui
 		}
 	}
-	m := &meta.MetaInfo{
+	m := &meta.Info{
 		Hash:      info,
 		BlockSize: u.Size,
 		Size:      size,
