@@ -16,6 +16,14 @@ func Upload(addr, path string) {
 	log.Println("upload success")
 }
 
+func UploadLocal(addr, path string) {
+	u := client.NewLocalUploader(2*1024*1024, "ali")
+	if er := u.UploadFile(path); er != nil {
+		log.Fatal("upload error:", er)
+	}
+	log.Println("upload success")
+}
+
 func Download(addr, info, path string) {
 	h, _ := hex.DecodeString(info)
 	d := client.NewRemoteDownloader(addr, h)
@@ -55,7 +63,7 @@ func main() {
 		if *meta {
 			DownloadMeta(name, *path)
 		} else {
-			Upload(*addr, name)
+			UploadLocal(*addr, name)
 		}
 	} else {
 		Download(*addr, name, *path)
