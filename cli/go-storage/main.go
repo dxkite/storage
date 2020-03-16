@@ -6,7 +6,7 @@ import (
 	"log"
 )
 
-func UploadLocal(addr, path string) {
+func Upload(path string) {
 	u := client.NewUploader(2*1024*1024, "ali")
 	if er := u.UploadFile(path); er != nil {
 		log.Fatal("upload error:", er)
@@ -27,7 +27,6 @@ func init() {
 }
 
 func main() {
-	var addr = flag.String("addr", "127.0.0.1:20214", "listening")
 	var path = flag.String("path", "./", "download to path")
 	var meta = flag.Bool("meta", false, "use meta file")
 	var help = flag.Bool("help", false, "print help info")
@@ -44,7 +43,7 @@ func main() {
 		if *meta {
 			DownloadMeta(name, *path)
 		} else {
-			UploadLocal(*addr, name)
+			Upload(name)
 		}
 	} else {
 		log.Println("error input file", name)
