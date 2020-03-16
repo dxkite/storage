@@ -43,12 +43,15 @@ func (u *Uploader) UploadFile(name string) error {
 	base := filepath.Base(file.Name())
 	log.Printf("upload meta info %x %s %d\n", info, base, size)
 	u.bn = name + ".uploading"
-	var buf = make([]byte, u.Size)
+
 	bc := int64(math.Ceil(float64(size) / float64(u.Size)))
 	ui := u.GetUploadInfo(base, size, bc, info)
 	u.UploadInfo = ui
+
 	var index = int64(0)
 	var err error
+	var buf = make([]byte, u.Size)
+
 	for {
 		nr, er := file.Read(buf)
 		if nr > 0 {
@@ -59,15 +62,17 @@ func (u *Uploader) UploadFile(name string) error {
 				continue
 			}
 			hh := ByteHash(buf)
+			var encoded []byte
 			if b, er := image.EncodeByte(buf); er != nil {
 				err = er
 				break
 			} else {
-				buf = b
+				encoded = b
 			}
+
 			if r, er := upload.Upload(u.Type, &upload.FileObject{
 				Name: strconv.Itoa(int(index)) + ".png",
-				Data: buf,
+				Data: encoded,
 			}); er != nil {
 				err = er
 				break
@@ -82,6 +87,7 @@ func (u *Uploader) UploadFile(name string) error {
 				log.Printf("uploaded %d/%d block\n", index+1, bc)
 				_ = EncodeUploadInfo(u.bn, ui)
 			}
+
 		}
 
 		if er != nil {
