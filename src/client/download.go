@@ -25,7 +25,6 @@ type Downloader struct {
 type MetaDownloader struct {
 	Downloader
 	MetaPath string
-	MetaInfo meta.Info
 }
 
 type RemoteDownloader struct {
@@ -71,7 +70,7 @@ func (d *MetaDownloader) init(metaFile, p string) (string, error) {
 	if er != nil {
 		return "", er
 	}
-	d.MetaInfo = *m
+	d.Info = *m
 	_ = os.MkdirAll(p, os.ModePerm)
 	df := path.Join(p, fmt.Sprintf("%x.gs-downloading", d.Hash))
 	if FileExist(df) {
@@ -93,8 +92,9 @@ func (d *MetaDownloader) init(metaFile, p string) (string, error) {
 		d.Index = bitset.New(int64(len(m.Block)))
 		d.DownloadTotal = len(m.Block)
 		d.Downloaded = 0
-		log.Println("create file", path.Join(p, d.Name))
-		file, err := os.OpenFile(path.Join(p, d.Name), os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.ModePerm)
+		pp := path.Join(p, d.Name)
+		log.Println("create file", pp)
+		file, err := os.OpenFile(pp, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.ModePerm)
 		if err != nil {
 			return df, err
 		}

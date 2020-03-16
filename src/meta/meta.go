@@ -25,6 +25,8 @@ const (
 	Type_Stream
 )
 
+const xor = 0x14
+
 type Info struct {
 	Status    Status      `bencode:"status"`
 	Hash      []byte      `bencode:"hash"`
@@ -62,7 +64,7 @@ func EncodeToFile(path string, info *Info) error {
 		return er
 	}
 	defer func() { _ = f.Close() }()
-	b := bencode.NewEncoder(f)
+	b := bencode.NewEncoder(NewXor(xor, f))
 	return b.Encode(info)
 }
 
@@ -71,7 +73,7 @@ func DecodeFromFile(path string) (*Info, error) {
 	if er != nil {
 		return nil, er
 	}
-	b := bencode.NewDecoder(f)
+	b := bencode.NewDecoder(NewXor(xor, f))
 	info := new(Info)
 	der := b.Decode(&info)
 	if der != nil {
