@@ -1,7 +1,7 @@
 package meta
 
 import (
-	"encoding/gob"
+	"github.com/zeebo/bencode"
 	"os"
 )
 
@@ -15,20 +15,20 @@ const (
 )
 
 type MetaInfo struct {
-	Status    Status
-	Hash      []byte
-	Name      string
-	Size      int64
-	BlockSize int64
-	Encode    int32
-	Type      int32
-	Block     []DataBlock
+	Status    Status      `bencode:"status"`
+	Hash      []byte      `bencode:"hash"`
+	Name      string      `bencode:"name"`
+	Size      int64       `bencode:"size"`
+	BlockSize int64       `bencode:"block_size"`
+	Encode    int32       `bencode:"encode"`
+	Type      int32       `bencode:"type"`
+	Block     []DataBlock `bencode:"blocks"`
 }
 
 type DataBlock struct {
-	Hash  []byte
-	Index int64
-	Data  []byte
+	Hash  []byte `bencode:"hash"`
+	Index int64  `bencode:"index"`
+	Data  []byte `bencode:"data"`
 }
 
 func (m *MetaInfo) AppendBlock(b *DataBlock) {
@@ -51,7 +51,7 @@ func EncodeToFile(path string, info *MetaInfo) error {
 		return er
 	}
 	defer func() { _ = f.Close() }()
-	b := gob.NewEncoder(f)
+	b := bencode.NewEncoder(f)
 	return b.Encode(info)
 }
 
@@ -60,7 +60,7 @@ func DecodeFromFile(path string) (*MetaInfo, error) {
 	if er != nil {
 		return nil, er
 	}
-	b := gob.NewDecoder(f)
+	b := bencode.NewDecoder(f)
 	info := new(MetaInfo)
 	der := b.Decode(&info)
 	if der != nil {
