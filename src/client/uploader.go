@@ -8,6 +8,7 @@ import (
 	"encoding/gob"
 	"io"
 	"log"
+	"math"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -43,16 +44,18 @@ func (u *Uploader) UploadFile(name string) error {
 	log.Printf("upload meta info %x %s %d\n", info, base, size)
 	u.bn = name + ".uploading"
 	var buf = make([]byte, u.Size)
-	ui := u.GetUploadInfo(base, size, info)
+	bc := int64(math.Ceil(float64(size) / float64(u.Size)))
+	ui := u.GetUploadInfo(base, size, bc, info)
 	u.UploadInfo = ui
 	var index = int64(0)
 	var err error
 	for {
 		nr, er := file.Read(buf)
 		if nr > 0 {
-			log.Printf("uploading %d block\n", index)
+			log.Printf("uploading %d/%d block\n", index+1, bc)
 			if ui.Index.Get(index) {
-				log.Printf("uploaded %d block before\n", index)
+				log.Printf("skip uploaded %d block\n", index+1)
+				index++
 				continue
 			}
 			hh := ByteHash(buf)
@@ -76,7 +79,7 @@ func (u *Uploader) UploadFile(name string) error {
 					Data:  []byte(r.Url),
 				})
 				ui.Index.Set(index)
-				log.Printf("uploaded %d block\n", index)
+				log.Printf("uploaded %d/%d block\n", index+1, bc)
 				_ = EncodeUploadInfo(u.bn, ui)
 			}
 		}
@@ -103,9 +106,9 @@ func (u *Uploader) UploadFile(name string) error {
 	return nil
 }
 
-func (u *Uploader) GetUploadInfo(name string, size int64, info []byte) *UploadInfo {
+func (u *Uploader) GetUploadInfo(name string, size, block int64, info []byte) *UploadInfo {
 	if FileExist(u.bn) {
-		if ui, er := DecodeUploadInfoFile(u.bn); er != nil {
+		if ui, er := DecodeUploadInfoFile(u.bn); er == nil {
 			return ui
 		}
 	}
@@ -120,7 +123,7 @@ func (u *Uploader) GetUploadInfo(name string, size int64, info []byte) *UploadIn
 		Block:     []meta.DataBlock{},
 	}
 	return &UploadInfo{
-		Index: bitset.New(size),
+		Index: bitset.New(block),
 		Meta:  m,
 	}
 }

@@ -20,12 +20,12 @@ type FileSystem struct {
 }
 
 func NewSystem(root string) FileSystem {
-	idx := path.Join(root, ".go-storage", "index")
+	idx := path.Join(root, ".storage", "index")
 	fs := FileSystem{
-		Dir:        webdav.Dir(path.Join(root, ".go-storage", "index")),
-		MetaRoot:   path.Join(root, ".go-storage", "meta"),
-		ObjectRoot: path.Join(root, ".go-storage", "object"),
-		UploadRoot: path.Join(root, ".go-storage", "upload"),
+		Dir:        webdav.Dir(path.Join(root, ".storage", "index")),
+		MetaRoot:   path.Join(root, ".storage", "meta"),
+		ObjectRoot: path.Join(root, ".storage", "object"),
+		UploadRoot: path.Join(root, ".storage", "upload"),
 	}
 	_ = os.MkdirAll(idx, os.ModePerm)
 	_ = os.MkdirAll(fs.MetaRoot, os.ModePerm)
