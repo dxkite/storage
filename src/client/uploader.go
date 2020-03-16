@@ -5,9 +5,7 @@ import (
 	"dxkite.cn/go-storage/src/image"
 	"dxkite.cn/go-storage/src/meta"
 	"dxkite.cn/go-storage/src/upload"
-	"dxkite.cn/go-storage/storage"
 	"encoding/gob"
-	"encoding/hex"
 	"io"
 	"log"
 	"os"
@@ -15,7 +13,7 @@ import (
 	"strconv"
 )
 
-type LocalUploader struct {
+type Uploader struct {
 	Size       int64
 	Type       string
 	bn         string
@@ -27,14 +25,14 @@ type UploadInfo struct {
 	Meta  *meta.MetaInfo
 }
 
-func NewLocalUploader(bs int64, t string) *LocalUploader {
-	return &LocalUploader{
+func NewUploader(bs int64, t string) *Uploader {
+	return &Uploader{
 		Size: bs,
 		Type: t,
 	}
 }
 
-func (u *LocalUploader) UploadFile(name string) error {
+func (u *Uploader) UploadFile(name string) error {
 	file, oer := os.OpenFile(name, os.O_RDONLY, os.ModePerm)
 	if oer != nil {
 		return oer
@@ -43,7 +41,7 @@ func (u *LocalUploader) UploadFile(name string) error {
 	var size = SteamSize(file)
 	base := filepath.Base(file.Name())
 	log.Printf("upload meta info %x %s %d\n", info, base, size)
-	u.bn = hex.EncodeToString(info) + ".uploading"
+	u.bn = name + ".uploading"
 	var buf = make([]byte, u.Size)
 	ui := u.GetUploadInfo(base, size, info)
 	u.UploadInfo = ui
@@ -79,6 +77,7 @@ func (u *LocalUploader) UploadFile(name string) error {
 				})
 				ui.Index.Set(index)
 				log.Printf("uploaded %d block\n", index)
+				_ = EncodeUploadInfo(u.bn, ui)
 			}
 		}
 
@@ -100,10 +99,11 @@ func (u *LocalUploader) UploadFile(name string) error {
 		return er
 	}
 	log.Println("finished")
+	_ = os.Remove(u.bn)
 	return nil
 }
 
-func (u *LocalUploader) GetUploadInfo(name string, size int64, info []byte) *UploadInfo {
+func (u *Uploader) GetUploadInfo(name string, size int64, info []byte) *UploadInfo {
 	if FileExist(u.bn) {
 		if ui, er := DecodeUploadInfoFile(u.bn); er != nil {
 			return ui
@@ -115,8 +115,8 @@ func (u *LocalUploader) GetUploadInfo(name string, size int64, info []byte) *Upl
 		Size:      size,
 		Name:      name,
 		Status:    meta.Create,
-		Type:      int32(storage.DataResponse_URI),
-		Encode:    int32(storage.DataResponse_IMAGE),
+		Type:      int32(meta.Type_URI),
+		Encode:    int32(meta.Encode_Image),
 		Block:     []meta.DataBlock{},
 	}
 	return &UploadInfo{

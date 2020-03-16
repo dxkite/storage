@@ -2,21 +2,17 @@ package client
 
 import (
 	"bytes"
-	"context"
 	"dxkite.cn/go-storage/src/bitset"
 	"dxkite.cn/go-storage/src/block"
 	"dxkite.cn/go-storage/src/image"
 	"dxkite.cn/go-storage/src/meta"
-	"dxkite.cn/go-storage/storage"
 	"errors"
 	"fmt"
-	"google.golang.org/grpc"
 	"log"
 	"net/http"
 	"os"
 	"path"
 	"sync"
-	"time"
 )
 
 type Downloader struct {
@@ -36,29 +32,10 @@ type RemoteDownloader struct {
 	Remote string
 }
 
-func NewRemoteDownloader(remote string, info []byte) *RemoteDownloader {
-	d := &RemoteDownloader{
-		Remote: remote,
-	}
-	d.Hash = info
-	return d
-}
-
 func NewMetaDownloader(path string) *MetaDownloader {
 	return &MetaDownloader{
 		MetaPath: path,
 	}
-}
-
-func (d *RemoteDownloader) DownloadToFile(path string) error {
-	df, err := d.init(path)
-	if err != nil {
-		return err
-	}
-	if er := d.download(df); er == nil {
-		_ = os.Remove(df)
-	}
-	return d.download(df)
 }
 
 func (d *MetaDownloader) DownloadToFile(path string) error {
@@ -128,43 +105,6 @@ func (d *MetaDownloader) init(metaFile, p string) (string, error) {
 	return df, nil
 }
 
-func (d *RemoteDownloader) init(p string) (string, error) {
-	_ = os.MkdirAll(p, os.ModePerm)
-	df := path.Join(p, fmt.Sprintf("%x.gs-downloading", d.Hash))
-	var f int
-	if FileExist(df) {
-		log.Println("reload meta info")
-		dd, err := DecodeToFile(df)
-		if err != nil {
-			return df, errors.New(fmt.Sprintf("reload downloading: %v", err))
-		}
-		d.DownloadMeta = *dd
-		f = os.O_CREATE | os.O_RDWR
-	} else {
-		log.Println("downloading meta info")
-		m, er := d.getMeta()
-		if er != nil {
-			return df, er
-		}
-		d.MetaInfo = *NewMeta(m)
-		d.Index = bitset.New(int64(len(m.Blocks)))
-		d.DownloadTotal = len(m.Blocks)
-		d.Downloaded = 0
-		f = os.O_CREATE | os.O_RDWR | os.O_TRUNC
-	}
-	if d.File == nil {
-		file, err := os.OpenFile(path.Join(p, d.Name), f, os.ModePerm)
-		if err != nil {
-			return df, err
-		}
-		d.File = &block.BlockFile{
-			File: file,
-			Hash: d.Hash,
-		}
-	}
-	return df, nil
-}
-
 func FileExist(path string) bool {
 	_, err := os.Stat(path)
 	if err != nil {
@@ -215,22 +155,6 @@ func (r *DownloadRetryable) downloadBlock(dataBlock *meta.DataBlock) (block.Bloc
 	start, end := r.d.calculateRange(dataBlock.Index)
 	block.NewBlock(start, end, buf)
 	return block.NewBlock(start, end, buf), err
-}
-
-func (d *RemoteDownloader) getMeta() (*storage.DataResponse, error) {
-	conn, err := grpc.Dial(d.Remote, grpc.WithInsecure(), grpc.WithBlock())
-	if err != nil {
-		log.Fatalf("did not connect: %v", err)
-	}
-	defer func() { _ = conn.Close() }()
-	c := storage.NewGoStorageClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*100)
-	defer cancel()
-	r, er := c.Get(ctx, &storage.GetResponse{Info: d.Hash})
-	if er != nil {
-		return nil, er
-	}
-	return r, nil
 }
 
 func (d *Downloader) calculateRange(index int64) (begin, end int64) {

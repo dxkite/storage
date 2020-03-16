@@ -2,7 +2,6 @@ package webdav
 
 import (
 	"dxkite.cn/go-storage/src/meta"
-	"dxkite.cn/go-storage/storage"
 )
 
 func NewLocalMeta(name string, hash []byte, size int64) *meta.MetaInfo {
@@ -12,8 +11,8 @@ func NewLocalMeta(name string, hash []byte, size int64) *meta.MetaInfo {
 		Size:      size,
 		Name:      name,
 		Status:    meta.Local,
-		Type:      int32(storage.DataResponse_STREAM),
-		Encode:    int32(storage.DataResponse_NONE),
+		Type:      int32(meta.Type_URI),
+		Encode:    int32(meta.Encode_Image),
 		Block:     nil,
 	}
 	return r

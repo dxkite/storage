@@ -6,12 +6,23 @@ import (
 )
 
 type Status int
+type EncodeType int
+type DataType int
 
 const (
 	Create Status = iota
 	Uploading
 	Finish
 	Local
+)
+
+const (
+	Encode_None EncodeType = iota
+	Encode_Image
+)
+const (
+	Type_URI DataType = iota
+	Type_Stream
 )
 
 type MetaInfo struct {

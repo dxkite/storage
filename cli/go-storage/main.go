@@ -2,35 +2,16 @@ package main
 
 import (
 	"dxkite.cn/go-storage/src/client"
-	"encoding/hex"
 	"flag"
 	"log"
-	"time"
 )
 
-func Upload(addr, path string) {
-	u := client.NewUploader(addr, time.Second*100)
-	if er := u.UploadFile(path); er != nil {
-		log.Fatal("upload error:", er)
-	}
-	log.Println("upload success")
-}
-
 func UploadLocal(addr, path string) {
-	u := client.NewLocalUploader(2*1024*1024, "ali")
+	u := client.NewUploader(2*1024*1024, "ali")
 	if er := u.UploadFile(path); er != nil {
 		log.Fatal("upload error:", er)
 	}
 	log.Println("upload success")
-}
-
-func Download(addr, info, path string) {
-	h, _ := hex.DecodeString(info)
-	d := client.NewRemoteDownloader(addr, h)
-	if er := d.DownloadToFile(path); er != nil {
-		log.Fatal(er)
-	}
-	log.Println("download success")
 }
 
 func DownloadMeta(meta, path string) {
@@ -66,6 +47,6 @@ func main() {
 			UploadLocal(*addr, name)
 		}
 	} else {
-		Download(*addr, name, *path)
+		log.Println("error input file", name)
 	}
 }
