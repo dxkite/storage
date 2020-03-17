@@ -27,12 +27,14 @@ type MetaDownloader struct {
 	Downloader
 	MetaPath string
 	Check    bool
+	Thread   int
 }
 
-func NewMetaDownloader(path string, check bool) *MetaDownloader {
+func NewMetaDownloader(path string, check bool, num int) *MetaDownloader {
 	return &MetaDownloader{
 		MetaPath: path,
 		Check:    check,
+		Thread:   num,
 	}
 }
 
@@ -42,7 +44,7 @@ func (d *MetaDownloader) DownloadToFile(path string) error {
 		return err
 	}
 	defer func() { _ = d.File.Close() }()
-	if er := d.download(df); er == nil {
+	if er := d.download(df, d.Thread); er == nil {
 		if d.Check && d.File.CheckSum() == false {
 			return errors.New("hash check error")
 		}
@@ -51,16 +53,19 @@ func (d *MetaDownloader) DownloadToFile(path string) error {
 	return nil
 }
 
-func (d *Downloader) download(df string) error {
+func (d *Downloader) download(df string, max int) error {
 	var g sync.WaitGroup
+	var limit = make(chan bool, max)
 	for _, bb := range d.Block {
 		g.Add(1)
 		go func(b meta.DataBlock) {
+			limit <- true
 			err := d.downloadBlock(df, &b)
 			if err != nil {
 				log.Println("error", err)
 			}
 			g.Done()
+			<-limit
 		}(bb)
 	}
 	g.Wait()

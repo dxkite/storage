@@ -14,10 +14,10 @@ func Upload(path string, bs int) {
 	log.Println("upload success")
 }
 
-func DownloadMeta(meta, path string, check bool) {
-	d := client.NewMetaDownloader(meta, check)
+func DownloadMeta(meta, path string, check bool, num int) {
+	d := client.NewMetaDownloader(meta, check, num)
 	if er := d.DownloadToFile(path); er != nil {
-		log.Fatal("download error: ", er)
+		log.Fatal(er)
 	}
 	log.Println("download success")
 }
@@ -32,6 +32,8 @@ func main() {
 	var check = flag.Bool("check", false, "check hash after download")
 	var block = flag.Int("block_size", 2, "block size, mb")
 	var help = flag.Bool("help", false, "print help info")
+	var num = flag.Int("threads", 20, "max download threads")
+
 	flag.Parse()
 	if *help || flag.NArg() < 1 {
 		flag.Usage()
@@ -40,11 +42,11 @@ func main() {
 	name := flag.Arg(0)
 	if client.FileExist(name) {
 		if *meta {
-			DownloadMeta(name, *path, *check)
+			DownloadMeta(name, *path, *check, *num)
 		} else {
 			Upload(name, *block)
 		}
 	} else {
-		DownloadMeta(name, *path, *check)
+		DownloadMeta(name, *path, *check, *num)
 	}
 }
