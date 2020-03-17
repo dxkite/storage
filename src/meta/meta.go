@@ -1,8 +1,11 @@
 package meta
 
 import (
+	"errors"
 	"github.com/zeebo/bencode"
+	"math/rand"
 	"os"
+	"time"
 )
 
 type Status int
@@ -25,7 +28,8 @@ const (
 	Type_Stream
 )
 
-const xor = 0x14
+const Magic = "\x14SMF"
+const Version = 1
 
 type Info struct {
 	Status    Status      `bencode:"status"`
@@ -63,7 +67,15 @@ func EncodeToFile(path string, info *Info) error {
 	if er != nil {
 		return er
 	}
+	rand.Seed(time.Now().Unix())
+	xor := byte(rand.Intn(254) + 1)
 	defer func() { _ = f.Close() }()
+	if _, er = f.WriteString(Magic); er != nil {
+		return er
+	}
+	if _, er = f.Write([]byte{Version, xor}); er != nil {
+		return er
+	}
 	b := bencode.NewEncoder(NewXor(xor, f))
 	return b.Encode(info)
 }
@@ -72,6 +84,17 @@ func DecodeFromFile(path string) (*Info, error) {
 	f, er := os.OpenFile(path, os.O_RDONLY, os.ModePerm)
 	if er != nil {
 		return nil, er
+	}
+	var bb = make([]byte, 6)
+	var xor byte
+
+	if _, er := f.Read(bb); er != nil {
+		return nil, er
+	} else {
+		if magic := bb[0:4]; string(magic) != Magic {
+			return nil, errors.New("unknown magic header")
+		}
+		xor = bb[5]
 	}
 	b := bencode.NewDecoder(NewXor(xor, f))
 	info := new(Info)
