@@ -2,21 +2,21 @@ package meta
 
 import "io"
 
-type XORWrapper struct {
-	io.ReadWriter
+type XORReader struct {
+	io.Reader
 	Value byte
 }
 
-func NewXor(n byte, rw io.ReadWriter) io.ReadWriter {
-	return XORWrapper{
-		ReadWriter: rw,
-		Value:      n,
+func NewXORReader(n byte, rw io.Reader) io.Reader {
+	return XORReader{
+		Reader: rw,
+		Value:  n,
 	}
 }
 
 // 写包装
-func (c XORWrapper) Read(b []byte) (n int, err error) {
-	n, re := c.ReadWriter.Read(b)
+func (c XORReader) Read(b []byte) (n int, err error) {
+	n, re := c.Reader.Read(b)
 	if re != nil {
 		err = re
 		return
@@ -27,10 +27,22 @@ func (c XORWrapper) Read(b []byte) (n int, err error) {
 	return n, err
 }
 
+type XORWriter struct {
+	io.Writer
+	Value byte
+}
+
+func NewXORWriter(n byte, rw io.ReadWriter) io.Writer {
+	return XORWriter{
+		Writer: rw,
+		Value:  n,
+	}
+}
+
 // 读包装
-func (c XORWrapper) Write(b []byte) (n int, err error) {
+func (c XORWriter) Write(b []byte) (n int, err error) {
 	for i, v := range b {
 		b[i] = v ^ c.Value
 	}
-	return c.ReadWriter.Write(b)
+	return c.Writer.Write(b)
 }

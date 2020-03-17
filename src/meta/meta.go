@@ -1,9 +1,13 @@
 package meta
 
 import (
+	"bytes"
 	"errors"
 	"github.com/zeebo/bencode"
+	"io"
+	"io/ioutil"
 	"math/rand"
+	"net/http"
 	"os"
 	"time"
 )
@@ -39,13 +43,13 @@ type Info struct {
 	BlockSize int64       `bencode:"block_size"`
 	Encode    int32       `bencode:"encode"`
 	Type      int32       `bencode:"type"`
-	Block     []DataBlock `bencode:"blocks"`
+	Block     []DataBlock `bencode:"block"`
 }
 
 type DataBlock struct {
-	Hash  []byte `bencode:"hash"`
-	Index int64  `bencode:"index"`
-	Data  []byte `bencode:"data"`
+	Hash  []byte `bencode:"h"`
+	Index int64  `bencode:"i"`
+	Data  []byte `bencode:"d"`
 }
 
 func (m *Info) AppendBlock(b *DataBlock) {
@@ -76,7 +80,7 @@ func EncodeToFile(path string, info *Info) error {
 	if _, er = f.Write([]byte{Version, xor}); er != nil {
 		return er
 	}
-	b := bencode.NewEncoder(NewXor(xor, f))
+	b := bencode.NewEncoder(NewXORWriter(xor, f))
 	return b.Encode(info)
 }
 
@@ -85,9 +89,26 @@ func DecodeFromFile(path string) (*Info, error) {
 	if er != nil {
 		return nil, er
 	}
+	defer func() { _ = f.Close() }()
+	return DecodeFromStream(f)
+}
+
+func DecodeFromUrl(url string) (*Info, error) {
+	if res, er := http.Get(url); er != nil {
+		return nil, er
+	} else {
+		defer func() { _ = res.Body.Close() }()
+		if bb, er := ioutil.ReadAll(res.Body); er != nil {
+			return nil, er
+		} else {
+			return DecodeFromStream(bytes.NewReader(bb))
+		}
+	}
+}
+
+func DecodeFromStream(f io.Reader) (*Info, error) {
 	var bb = make([]byte, 6)
 	var xor byte
-
 	if _, er := f.Read(bb); er != nil {
 		return nil, er
 	} else {
@@ -96,12 +117,11 @@ func DecodeFromFile(path string) (*Info, error) {
 		}
 		xor = bb[5]
 	}
-	b := bencode.NewDecoder(NewXor(xor, f))
+	b := bencode.NewDecoder(NewXORReader(xor, f))
 	info := new(Info)
 	der := b.Decode(&info)
 	if der != nil {
 		return nil, der
 	}
-	defer func() { _ = f.Close() }()
 	return info, nil
 }

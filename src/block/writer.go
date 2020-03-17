@@ -13,9 +13,14 @@ var (
 	errorSeek = errors.New("error seek")
 )
 
+type File interface {
+	io.ReadWriteSeeker
+	io.Closer
+}
+
 type BlockFile struct {
-	File io.ReadWriteSeeker // 文件
-	Hash []byte             // 文件HASH
+	File File   // 文件
+	Hash []byte // 文件HASH
 	lock sync.Mutex
 }
 
@@ -81,4 +86,8 @@ func (b *BlockFile) CheckSum() bool {
 		panic(fmt.Sprintf("check sum: %v", err))
 	}
 	return bytes.Compare(h.Sum(nil), b.Hash) == 0
+}
+
+func (b *BlockFile) Close() error {
+	return b.File.Close()
 }

@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 	"sync"
 )
 
@@ -25,16 +26,13 @@ type Downloader struct {
 type MetaDownloader struct {
 	Downloader
 	MetaPath string
+	Check    bool
 }
 
-type RemoteDownloader struct {
-	Downloader
-	Remote string
-}
-
-func NewMetaDownloader(path string) *MetaDownloader {
+func NewMetaDownloader(path string, check bool) *MetaDownloader {
 	return &MetaDownloader{
 		MetaPath: path,
+		Check:    check,
 	}
 }
 
@@ -43,9 +41,13 @@ func (d *MetaDownloader) DownloadToFile(path string) error {
 	if err != nil {
 		return err
 	}
+	defer func() { _ = d.File.Close() }()
 	if er := d.download(df); er == nil {
-		_ = os.Remove(df)
+		if d.Check && d.File.CheckSum() == false {
+			return errors.New("hash check error")
+		}
 	}
+	_ = os.Remove(df)
 	return nil
 }
 
@@ -65,12 +67,31 @@ func (d *Downloader) download(df string) error {
 	return nil
 }
 
+func (d *MetaDownloader) initMeta(metaFile string) error {
+	if strings.Index(metaFile, "https://") == 0 || strings.Index(metaFile, "http://") == 0 {
+		m, er := meta.DecodeFromUrl(metaFile)
+		if er != nil {
+			return er
+		}
+		d.Info = *m
+	} else {
+		m, er := meta.DecodeFromFile(metaFile)
+		if er != nil {
+			return er
+		}
+		d.Info = *m
+	}
+	if d.Status != meta.Finish {
+		return errors.New("meta status error")
+	}
+	return nil
+}
+
 func (d *MetaDownloader) init(metaFile, p string) (string, error) {
-	m, er := meta.DecodeFromFile(metaFile)
-	if er != nil {
+	if er := d.initMeta(metaFile); er != nil {
 		return "", er
 	}
-	d.Info = *m
+	log.Println("download", metaFile)
 	_ = os.MkdirAll(p, os.ModePerm)
 	df := path.Join(p, fmt.Sprintf("%x.gs-downloading", d.Hash))
 	if FileExist(df) {
@@ -89,8 +110,8 @@ func (d *MetaDownloader) init(metaFile, p string) (string, error) {
 			Hash: d.Hash,
 		}
 	} else {
-		d.Index = bitset.New(int64(len(m.Block)))
-		d.DownloadTotal = len(m.Block)
+		d.Index = bitset.New(int64(len(d.Block)))
+		d.DownloadTotal = len(d.Block)
 		d.Downloaded = 0
 		pp := path.Join(p, d.Name)
 		log.Println("create file", pp)
@@ -100,7 +121,7 @@ func (d *MetaDownloader) init(metaFile, p string) (string, error) {
 		}
 		d.File = &block.BlockFile{
 			File: file,
-			Hash: m.Hash,
+			Hash: d.Hash,
 		}
 	}
 	return df, nil
