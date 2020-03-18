@@ -7,6 +7,8 @@ import (
 	"os"
 )
 
+const xor = 0x14
+
 type DownloadMeta struct {
 	meta.Info
 	Index         bitset.BitSet
@@ -20,7 +22,7 @@ func EncodeToFile(path string, info *DownloadMeta) error {
 		return er
 	}
 	defer func() { _ = f.Close() }()
-	b := gob.NewEncoder(f)
+	b := gob.NewEncoder(meta.NewXORWriter(xor, f))
 	return b.Encode(info)
 }
 
@@ -30,7 +32,7 @@ func DecodeToFile(path string) (*DownloadMeta, error) {
 		return nil, er
 	}
 	defer func() { _ = f.Close() }()
-	b := gob.NewDecoder(f)
+	b := gob.NewDecoder(meta.NewXORReader(xor, f))
 	info := new(DownloadMeta)
 	der := b.Decode(&info)
 	if der != nil {

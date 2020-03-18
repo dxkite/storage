@@ -6,6 +6,7 @@ import (
 	"dxkite.cn/go-storage/src/block"
 	"dxkite.cn/go-storage/src/image"
 	"dxkite.cn/go-storage/src/meta"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"log"
@@ -18,9 +19,10 @@ import (
 
 type Downloader struct {
 	DownloadMeta
-	File  *block.BlockFile
-	Error error
-	mutex sync.Mutex
+	File     *block.BlockFile
+	BlockTry int
+	Error    error
+	mutex    sync.Mutex
 }
 
 type MetaDownloader struct {
@@ -31,11 +33,13 @@ type MetaDownloader struct {
 }
 
 func NewMetaDownloader(path string, check bool, num int) *MetaDownloader {
-	return &MetaDownloader{
+	m := &MetaDownloader{
 		MetaPath: path,
 		Check:    check,
 		Thread:   num,
 	}
+	m.BlockTry = 5
+	return m
 }
 
 func (d *MetaDownloader) DownloadToFile(path string) error {
@@ -44,13 +48,14 @@ func (d *MetaDownloader) DownloadToFile(path string) error {
 		return err
 	}
 	defer func() { _ = d.File.Close() }()
-	if er := d.download(df, d.Thread); er == nil {
-		if d.Check && d.File.CheckSum() == false {
-			return errors.New("hash check error")
-		}
+	if er := d.download(df, d.Thread); er != nil {
+		return er
+	}
+	if d.Check && d.File.CheckSum() == false {
+		return errors.New("hash check error")
 	}
 	_ = os.Remove(df)
-	return nil
+	return err
 }
 
 func (d *Downloader) download(df string, max int) error {
@@ -62,14 +67,16 @@ func (d *Downloader) download(df string, max int) error {
 			limit <- true
 			err := d.downloadBlock(df, &b)
 			if err != nil {
-				log.Println("error", err)
+				d.mutex.Lock()
+				d.Error = err
+				d.mutex.Unlock()
 			}
 			g.Done()
 			<-limit
 		}(bb)
 	}
 	g.Wait()
-	return nil
+	return d.Error
 }
 
 func (d *MetaDownloader) initMeta(metaFile string) error {
@@ -96,11 +103,18 @@ func (d *MetaDownloader) init(metaFile, p string) (string, error) {
 	if er := d.initMeta(metaFile); er != nil {
 		return "", er
 	}
-	log.Println("download", metaFile)
+	log.Println("download meta", metaFile)
+
+	log.Println(":name", d.Name)
+	log.Println(":sha1", hex.EncodeToString(d.Hash))
+	log.Println(":size", d.Size)
+
+	log.Println("check enable", d.Check)
+
 	_ = os.MkdirAll(p, os.ModePerm)
-	df := path.Join(p, fmt.Sprintf("%x.gs-downloading", d.Hash))
+	df := path.Join(p, d.Name+".downloading")
 	if FileExist(df) {
-		log.Println("reload meta info")
+		log.Println("reload download status")
 		dd, err := DecodeToFile(df)
 		if err != nil {
 			return df, errors.New(fmt.Sprintf("reload downloading: %v", err))
@@ -150,10 +164,6 @@ type DownloadRetryable struct {
 
 func (r *DownloadRetryable) downloadBlock(dataBlock *meta.DataBlock) (block.Block, error) {
 	// 下载成功
-	if r.d.Index.Get(dataBlock.Index) {
-		log.Printf("block %d is exist", dataBlock.Index)
-		return nil, nil
-	}
 	var retry = false
 	var err error
 	buf, er := GetRemoteData(string(dataBlock.Data))
@@ -194,8 +204,12 @@ func (d *Downloader) calculateRange(index int64) (begin, end int64) {
 }
 
 func (d *Downloader) downloadBlock(df string, dataBlock *meta.DataBlock) error {
+	if d.Index.Get(dataBlock.Index) {
+		log.Printf("block %d is exist", dataBlock.Index)
+		return nil
+	}
 	log.Printf("[%.2f%%] block %d downloading", float64(d.Downloaded)*100/float64(d.DownloadTotal), dataBlock.Index)
-	dr := DownloadRetryable{5, d}
+	dr := DownloadRetryable{d.BlockTry, d}
 	bb, er := dr.downloadBlock(dataBlock)
 	if er != nil {
 		return er

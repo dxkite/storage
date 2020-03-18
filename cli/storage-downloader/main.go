@@ -6,14 +6,6 @@ import (
 	"log"
 )
 
-func DownloadMeta(meta, path string, check bool, num int) {
-	d := client.NewMetaDownloader(meta, check, num)
-	if er := d.DownloadToFile(path); er != nil {
-		log.Fatal(er)
-	}
-	log.Println("download success")
-}
-
 func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 }
@@ -21,8 +13,9 @@ func init() {
 func main() {
 	var path = flag.String("path", "./", "download to path")
 	var help = flag.Bool("help", false, "print help info")
-	var check = flag.Bool("check", false, "check hash after download")
+	var uncheck = flag.Bool("uncheck", false, "uncheck hash after downloaded")
 	var num = flag.Int("threads", 20, "max download threads")
+	var retry = flag.Int("retry", 20, "max retry when error")
 
 	flag.Parse()
 	if *help || flag.NArg() < 1 {
@@ -30,5 +23,5 @@ func main() {
 		return
 	}
 	name := flag.Arg(0)
-	DownloadMeta(name, *path, *check, *num)
+	client.Default.Download(name, *path, *uncheck == false, *num, *retry)
 }
