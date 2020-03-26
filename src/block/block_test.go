@@ -1,6 +1,7 @@
 package block
 
 import (
+	"bytes"
 	"crypto/sha1"
 	"os"
 	"testing"
@@ -34,6 +35,24 @@ func TestBlockFile_WriteRange(t *testing.T) {
 	}
 	if err := block.WriteBlock(NewBlock(int64(len(r1)+len(r2)), int64(len(r1)+len(r2)+len(r3)), r3)); err != nil {
 		t.Error(err)
+	}
+
+	if bb, err := block.ReadBlock(NewBlock(int64(len(r1)), int64(len(r1)+len(r2)), nil)); err != nil {
+		t.Error(err)
+	} else if bytes.Compare(bb, r2) != 0 {
+		t.Errorf("want %v got %v\n", r2, bb)
+	}
+
+	if bb, err := block.ReadBlock(NewBlock(0, int64(len(r1)), nil)); err != nil {
+		t.Error(err)
+	} else if bytes.Compare(bb, r1) != 0 {
+		t.Errorf("want %v got %v\n", r1, bb)
+	}
+
+	if bb, err := block.ReadBlock(NewBlock(int64(len(r1)+len(r2)), int64(len(r1)+len(r2)+len(r3)), nil)); err != nil {
+		t.Error(err)
+	} else if bytes.Compare(bb, r3) != 0 {
+		t.Errorf("want %v got %v\n", r3, bb)
 	}
 
 	if block.CheckSum() == false {

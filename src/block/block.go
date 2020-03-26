@@ -64,7 +64,7 @@ func (b *BlockFile) WriteBlock(c Block) error {
 	if s, err := b.File.Seek(c.Start(), io.SeekStart); err != nil {
 		return err
 	} else {
-		if int64(s) != c.Start() {
+		if s != c.Start() {
 			return errorSeek
 		}
 	}
@@ -76,6 +76,28 @@ func (b *BlockFile) WriteBlock(c Block) error {
 		}
 	}
 	return nil
+}
+
+func (b *BlockFile) ReadBlock(c Block) ([]byte, error) {
+	b.lock.Lock()
+	defer b.lock.Unlock()
+	l := c.End() - c.Start()
+	buf := make([]byte, l)
+	if s, err := b.File.Seek(c.Start(), io.SeekStart); err != nil {
+		return nil, err
+	} else {
+		if s != c.Start() {
+			return nil, errorSeek
+		}
+	}
+	if nr, er := b.File.Read(buf); er != nil {
+		return nil, er
+	} else {
+		if int64(nr) != l {
+			return nil, errors.New("error read size")
+		}
+		return buf, nil
+	}
 }
 
 func (b *BlockFile) CheckSum() bool {

@@ -61,9 +61,9 @@ func (u *Uploader) UploadFile(name string) error {
 				index++
 				continue
 			}
-			hh := ByteHash(buf)
+			hh := ByteHash(buf[:nr])
 			var encoded []byte
-			if b, er := image.EncodeByte(buf); er != nil {
+			if b, er := image.EncodeByte(buf[:nr]); er != nil {
 				err = er
 				break
 			} else {
