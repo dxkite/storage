@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"dxkite.cn/go-storage/src/bitset"
 	"dxkite.cn/go-storage/src/block"
+	"dxkite.cn/go-storage/src/config"
 	"dxkite.cn/go-storage/src/image"
 	"dxkite.cn/go-storage/src/meta"
 	"encoding/hex"
@@ -86,6 +87,13 @@ func (d *MetaDownloader) initMeta(metaFile string) error {
 			return er
 		}
 		d.Info = *m
+	} else if strings.Index(metaFile, config.BASE_PROTOCOL+"://") == 0 {
+		// storage://meta?dl=base64_encode(meta)
+		m, er := meta.DecodeFromMetaProtocol(metaFile)
+		if er != nil {
+			return er
+		}
+		d.Info = *m
 	} else {
 		m, er := meta.DecodeFromFile(metaFile)
 		if er != nil {
@@ -112,7 +120,7 @@ func (d *MetaDownloader) init(metaFile, p string) (string, error) {
 	log.Println("check enable", d.Check)
 
 	_ = os.MkdirAll(p, os.ModePerm)
-	df := path.Join(p, d.Name+".downloading")
+	df := path.Join(p, d.Name+config.EXT_DOWNLOADING)
 	if FileExist(df) {
 		log.Println("reload download status")
 		dd, err := DecodeToFile(df)

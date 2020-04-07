@@ -1,6 +1,9 @@
 package client
 
-import "log"
+import (
+	"dxkite.cn/go-storage/src/install"
+	"log"
+)
 
 type Client struct {
 }
@@ -11,6 +14,12 @@ func (Client) Upload(path string, bs int) {
 		log.Fatal("upload error:", er)
 	}
 	log.Println("upload success")
+}
+
+func Install(path string) {
+	if er := install.CreateHelper(path); er != nil {
+		log.Println("error install", er)
+	}
 }
 
 func (Client) Download(meta, path string, check bool, num, retry int) {

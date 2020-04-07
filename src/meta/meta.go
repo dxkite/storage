@@ -2,12 +2,16 @@ package meta
 
 import (
 	"bytes"
+	"dxkite.cn/go-storage/src/config"
+	"encoding/base64"
 	"errors"
+	"fmt"
 	"github.com/zeebo/bencode"
 	"io"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 )
@@ -91,6 +95,25 @@ func DecodeFromFile(path string) (*Info, error) {
 	}
 	defer func() { _ = f.Close() }()
 	return DecodeFromStream(f)
+}
+
+func DecodeFromMetaProtocol(path string) (*Info, error) {
+	u, er := url.Parse(path)
+	if er != nil {
+		return nil, er
+	}
+	if u.Scheme != config.BASE_PROTOCOL {
+		return nil, errors.New("need protocol " + config.BASE_PROTOCOL)
+	}
+	if u.Host != config.HOST_META {
+		return nil, errors.New("need host meta")
+	}
+	dl := u.Query().Get("dl")
+	if dd, err := base64.StdEncoding.DecodeString(dl); err != nil {
+		return nil, errors.New(fmt.Sprintf("protocol decode dl %v", err))
+	} else {
+		return DecodeFromUrl(string(dd))
+	}
 }
 
 func DecodeFromUrl(url string) (*Info, error) {
