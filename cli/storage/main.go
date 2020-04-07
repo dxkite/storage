@@ -5,6 +5,7 @@ import (
 	"flag"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 )
 
@@ -13,7 +14,7 @@ func init() {
 }
 
 func main() {
-	var path = flag.String("path", "./", "download to path")
+	var dl = flag.String("dl", "", "download to dl")
 	var meta = flag.Bool("meta", false, "use meta file")
 	var install = flag.Bool("install", false, "install")
 	var uncheck = flag.Bool("uncheck", false, "uncheck hash after downloaded")
@@ -23,9 +24,9 @@ func main() {
 	var retry = flag.Int("retry", 20, "max retry when error")
 
 	flag.Parse()
+	p, _ := filepath.Abs(os.Args[0])
 
 	if *install {
-		p, _ := filepath.Abs(os.Args[0])
 		client.Install(p)
 		return
 	}
@@ -38,11 +39,18 @@ func main() {
 	name := flag.Arg(0)
 	if client.FileExist(name) {
 		if *meta {
-			client.Default.Download(name, *path, *uncheck == false, *num, *retry)
+			p, _ := filepath.Abs(name)
+			*dl = filepath.Dir(p)
+			client.Default.Download(name, *dl, *uncheck == false, *num, *retry)
 		} else {
 			client.Default.Upload(name, *block)
 		}
 	} else {
-		client.Default.Download(name, *path, *uncheck == false, *num, *retry)
+		if len(*dl) <= 0 {
+			pp := filepath.Dir(p)
+			*dl = path.Join(pp, "Download")
+			_ = os.MkdirAll(*dl, os.ModePerm)
+		}
+		client.Default.Download(name, *dl, *uncheck == false, *num, *retry)
 	}
 }

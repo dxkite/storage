@@ -19,6 +19,8 @@ func (Client) Upload(path string, bs int) {
 func Install(path string) {
 	if er := install.CreateHelper(path); er != nil {
 		log.Println("error install", er)
+	} else {
+		log.Println("install success")
 	}
 }
 
