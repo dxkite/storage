@@ -48,6 +48,9 @@ func (d *MetaDownloader) DownloadToFile(path string) error {
 	if err != nil {
 		return err
 	}
+	if d.Downloaded == d.DownloadTotal {
+		return nil
+	}
 	defer func() { _ = d.File.Close() }()
 	if er := d.download(df, d.Thread); er != nil {
 		return er
@@ -81,15 +84,15 @@ func (d *Downloader) download(df string, max int) error {
 }
 
 func (d *MetaDownloader) initMeta(metaFile string) error {
-	if strings.Index(metaFile, "https://") == 0 || strings.Index(metaFile, "http://") == 0 {
-		m, er := meta.DecodeFromUrl(metaFile)
+	if strings.Index(metaFile, common.BASE_PROTOCOL+"://") == 0 {
+		// storage://meta?dl=base64_encode(meta-url)
+		m, er := meta.DecodeFromMetaProtocol(metaFile)
 		if er != nil {
 			return er
 		}
 		d.Info = *m
-	} else if strings.Index(metaFile, common.BASE_PROTOCOL+"://") == 0 {
-		// storage://meta?dl=base64_encode(meta)
-		m, er := meta.DecodeFromMetaProtocol(metaFile)
+	} else if strings.Index(metaFile, "https://") == 0 || strings.Index(metaFile, "http://") == 0 {
+		m, er := meta.DecodeFromUrl(metaFile)
 		if er != nil {
 			return er
 		}
@@ -111,16 +114,17 @@ func (d *MetaDownloader) init(metaFile, p string) (string, error) {
 	if er := d.initMeta(metaFile); er != nil {
 		return "", er
 	}
-	log.Println("download meta", metaFile)
 
+	log.Println("download meta", metaFile)
 	log.Println(":name", d.Name)
 	log.Println(":sha1", hex.EncodeToString(d.Hash))
 	log.Println(":size", d.Size)
-
 	log.Println("check enable", d.Check)
 
 	_ = os.MkdirAll(p, os.ModePerm)
 	df := path.Join(p, d.Name+common.EXT_DOWNLOADING)
+	pp := path.Join(p, d.Name)
+
 	if common.FileExist(df) {
 		log.Println("reload download status")
 		dd, err := DecodeToFile(df)
@@ -128,30 +132,69 @@ func (d *MetaDownloader) init(metaFile, p string) (string, error) {
 			return df, errors.New(fmt.Sprintf("reload downloading: %v", err))
 		}
 		d.DownloadMeta = *dd
-		file, err := os.OpenFile(path.Join(p, d.Name), os.O_CREATE|os.O_RDWR, os.ModePerm)
-		if err != nil {
-			return df, err
-		}
-		d.File = &block.BlockFile{
-			File: file,
-			Hash: d.Hash,
+		d.Downloaded = 0
+		if er := d.makeDownloadFile(pp); er != nil {
+			return df, er
 		}
 	} else {
 		d.Index = bitset.New(int64(len(d.Block)))
 		d.DownloadTotal = len(d.Block)
 		d.Downloaded = 0
-		pp := path.Join(p, d.Name)
-		log.Println("create file", pp)
-		file, err := os.OpenFile(pp, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.ModePerm)
-		if err != nil {
-			return df, err
-		}
-		d.File = &block.BlockFile{
-			File: file,
-			Hash: d.Hash,
+		if er := d.makeDownloadFile(pp); er != nil {
+			return df, er
 		}
 	}
 	return df, nil
+}
+
+func (d *MetaDownloader) checkBlock(bb meta.DataBlock) bool {
+	start, end := d.calculateRange(bb.Index)
+
+	rb := block.NewBlock(start, end, nil)
+	if buf, err := d.File.ReadBlock(rb); err != nil {
+		return false
+	} else if bytes.Equal(ByteHash(buf), bb.Hash) {
+		return true
+	} /*else {
+		log.Println("want hash", hex.EncodeToString(bb.Hash), "got hash", hex.EncodeToString(ByteHash(buf)))
+		log.Println("block", bb.Index, "start", start, "end", end, "size", end-start)
+		log.Println("data", len(buf), hex.EncodeToString(buf[:10]), hex.EncodeToString(buf[len(buf)-10:]))
+	}*/
+	return false
+}
+
+func (d *MetaDownloader) makeDownloadFile(path string) error {
+	flag := os.O_CREATE | os.O_RDWR
+	exist := common.FileExist(path)
+
+	if exist {
+		log.Println("file exists", path)
+	} else {
+		flag |= os.O_TRUNC
+		log.Println("create file", path)
+	}
+
+	file, err := os.OpenFile(path, flag, os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	d.File = &block.BlockFile{
+		File: file,
+		Hash: d.Hash,
+	}
+
+	if exist {
+		log.Println("start check download blocks", path)
+		for _, bb := range d.Block {
+			if d.checkBlock(bb) {
+				log.Println(fmt.Sprintf("block %d is downloaded", bb.Index))
+				d.Index.Set(bb.Index)
+				d.Downloaded++
+			}
+		}
+	}
+	return nil
 }
 
 type DownloadRetryable struct {
@@ -187,7 +230,9 @@ func (r *DownloadRetryable) downloadBlock(dataBlock *meta.DataBlock) (block.Bloc
 
 	log.Printf("block %d dwonloaded", dataBlock.Index)
 	start, end := r.d.calculateRange(dataBlock.Index)
-	block.NewBlock(start, end, buf)
+	//xb := block.NewBlock(start, end, buf)
+	//log.Println("block", dataBlock.Index, "start", start, "end", end, "size", end-start /**/)
+	//log.Println("data", len(buf), hex.EncodeToString(buf[:10]), hex.EncodeToString(buf[len(buf)-10:]))
 	return block.NewBlock(start, end, buf), err
 }
 
@@ -200,8 +245,15 @@ func (d *Downloader) calculateRange(index int64) (begin, end int64) {
 	return begin, end
 }
 
-func (d *Downloader) downloadBlock(df string, dataBlock *meta.DataBlock) error {
+func (d *Downloader) IsDownloaded(dataBlock *meta.DataBlock) bool {
 	if d.Index.Get(dataBlock.Index) {
+		return true
+	}
+	return false
+}
+
+func (d *Downloader) downloadBlock(df string, dataBlock *meta.DataBlock) error {
+	if d.IsDownloaded(dataBlock) {
 		log.Printf("block %d is exist", dataBlock.Index)
 		return nil
 	}
