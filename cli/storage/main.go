@@ -48,14 +48,16 @@ func main() {
 	name := flag.Arg(0)
 	if common.FileExist(name) {
 		if strings.HasSuffix(name, ".meta") {
-			p, _ := filepath.Abs(name)
-			*dl = filepath.Dir(p)
+			if len(*dl) == 0 {
+				p, _ := filepath.Abs(name)
+				*dl = filepath.Dir(p)
+			}
 			client.Default.Download(name, *dl, *uncheck == false, *num, *retry)
 		} else {
 			client.Default.Upload(name, *block)
 		}
 	} else {
-		if len(*dl) <= 0 {
+		if len(*dl) == 0 {
 			pp := filepath.Dir(p)
 			*dl = path.Join(pp, "Download")
 			_ = os.MkdirAll(*dl, os.ModePerm)
