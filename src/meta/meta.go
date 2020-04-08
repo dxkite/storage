@@ -2,7 +2,7 @@ package meta
 
 import (
 	"bytes"
-	"dxkite.cn/go-storage/src/config"
+	"dxkite.cn/go-storage/src/common"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -102,10 +102,10 @@ func DecodeFromMetaProtocol(path string) (*Info, error) {
 	if er != nil {
 		return nil, er
 	}
-	if u.Scheme != config.BASE_PROTOCOL {
-		return nil, errors.New("need protocol " + config.BASE_PROTOCOL)
+	if u.Scheme != common.BASE_PROTOCOL {
+		return nil, errors.New("need protocol " + common.BASE_PROTOCOL)
 	}
-	if u.Host != config.HOST_META {
+	if u.Host != common.HOST_META {
 		return nil, errors.New("need host meta")
 	}
 	dl := u.Query().Get("dl")

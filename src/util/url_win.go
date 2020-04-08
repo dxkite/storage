@@ -1,17 +1,17 @@
 // +build windows
 
-package install
+package util
 
 import (
-	"dxkite.cn/go-storage/src/config"
+	"dxkite.cn/go-storage/src/common"
+	"fmt"
 	"golang.org/x/sys/windows/registry"
-	"os"
 	"strconv"
 )
 
 // 注册URL打开
 // 参考：https://docs.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/platform-apis/aa767914(v=vs.85)
-func RegisterURLProtocol(proto, name, icon, cmd string) error {
+func registerURLProtocol(proto, name, icon, cmd string) error {
 	// 注册协议基本
 	if k, _, err := registry.CreateKey(registry.CLASSES_ROOT, proto, registry.ALL_ACCESS); err != nil {
 		return err
@@ -44,7 +44,7 @@ func RegisterURLProtocol(proto, name, icon, cmd string) error {
 
 // 注册文件关联
 // 参考：https://docs.microsoft.com/en-us/windows/win32/shell/fa-file-types
-func RegisterFileAssociate(ext, icon, cmd, name, info string) error {
+func registerFileAssociate(ext, icon, cmd, name, info string) error {
 	// 注册协议基本
 	if k, _, err := registry.CreateKey(registry.CLASSES_ROOT, name, registry.ALL_ACCESS); err != nil {
 		return err
@@ -80,29 +80,63 @@ func RegisterFileAssociate(ext, icon, cmd, name, info string) error {
 	return nil
 }
 
-func CreateHelper(exec string) error {
+func Install(exec string) error {
 	// 检测图标
 	icon := strconv.Quote(exec) + `,0`
-	if fileExist(exec + ".ico") {
+	if common.FileExist(exec + ".ico") {
 		icon = strconv.Quote(exec + ".ico")
 	}
-
-	if er := RegisterURLProtocol(config.BASE_PROTOCOL, "Go Storage", icon, strconv.Quote(exec)+` -meta "%1"`); er != nil {
+	if er := registerURLProtocol(common.BASE_PROTOCOL, "Go Storage", icon, strconv.Quote(exec)+` "%1"`); er != nil {
 		return er
 	}
-	if er := RegisterFileAssociate(".meta", icon, strconv.Quote(exec)+` -meta "%1"`, "GoStorageMetaFile", "Go Storage Download Meta File"); er != nil {
+	if er := registerFileAssociate(common.EXT_META, icon, strconv.Quote(exec)+` "%1"`, common.META_NAME, common.META_INFO); er != nil {
 		return er
 	}
 	return nil
 }
 
-func fileExist(path string) bool {
-	_, err := os.Stat(path)
-	if err != nil {
-		if os.IsExist(err) { // 根据错误类型进行判断
-			return true
-		}
-		return false
+type MsgError struct {
+	msg string
+	err error
+}
+
+func (ue MsgError) Error() string {
+	return fmt.Sprintf("%s %v", ue.msg, ue.err)
+}
+
+func deleteURLProtocol(name string) error {
+	if err := registry.DeleteKey(registry.CLASSES_ROOT, name+`\DefaultIcon`); err != nil && err != registry.ErrNotExist {
+		return MsgError{"delete reg:" + common.BASE_PROTOCOL + `\DefaultIcon`, err}
 	}
-	return true
+
+	if err := registry.DeleteKey(registry.CLASSES_ROOT, name+`\shell\open\command`); err != nil && err != registry.ErrNotExist {
+		return MsgError{"delete reg:" + name + `\shell\open\command`, err}
+	}
+
+	if err := registry.DeleteKey(registry.CLASSES_ROOT, name+`\shell\open`); err != nil && err != registry.ErrNotExist {
+		return MsgError{"delete reg:" + name + `\shell\open`, err}
+	}
+
+	if err := registry.DeleteKey(registry.CLASSES_ROOT, name+`\shell`); err != nil && err != registry.ErrNotExist {
+		return MsgError{"delete reg:" + name + `\shell`, err}
+	}
+
+	if err := registry.DeleteKey(registry.CLASSES_ROOT, name); err != nil && err != registry.ErrNotExist {
+		return MsgError{"delete reg:" + name, err}
+	}
+
+	return nil
+}
+
+func Uninstall(path string) error {
+	if err := registry.DeleteKey(registry.CLASSES_ROOT, common.EXT_META); err != nil && err != registry.ErrNotExist {
+		return MsgError{"delete reg:" + common.EXT_META, err}
+	}
+	if err := deleteURLProtocol(common.BASE_PROTOCOL); err != nil {
+		return err
+	}
+	if err := deleteURLProtocol(common.META_NAME); err != nil {
+		return err
+	}
+	return nil
 }

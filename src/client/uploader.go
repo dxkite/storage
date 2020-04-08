@@ -2,7 +2,7 @@ package client
 
 import (
 	"dxkite.cn/go-storage/src/bitset"
-	"dxkite.cn/go-storage/src/config"
+	"dxkite.cn/go-storage/src/common"
 	"dxkite.cn/go-storage/src/image"
 	"dxkite.cn/go-storage/src/meta"
 	"dxkite.cn/go-storage/src/upload"
@@ -43,7 +43,7 @@ func (u *Uploader) UploadFile(name string) error {
 	var size = SteamSize(file)
 	base := filepath.Base(file.Name())
 	log.Printf("upload meta info %x %s %d\n", info, base, size)
-	u.bn = name + config.EXT_UPLOADING
+	u.bn = name + common.EXT_UPLOADING
 
 	bc := int64(math.Ceil(float64(size) / float64(u.Size)))
 	ui := u.GetUploadInfo(base, size, bc, info)
@@ -104,7 +104,7 @@ func (u *Uploader) UploadFile(name string) error {
 		return err
 	}
 	ui.Meta.Status = meta.Finish
-	if er := meta.EncodeToFile(name+config.EXT_META, ui.Meta); er != nil {
+	if er := meta.EncodeToFile(name+common.EXT_META, ui.Meta); er != nil {
 		_ = EncodeUploadInfo(u.bn, ui)
 		return er
 	}
@@ -114,7 +114,7 @@ func (u *Uploader) UploadFile(name string) error {
 }
 
 func (u *Uploader) GetUploadInfo(name string, size, block int64, info []byte) *UploadInfo {
-	if FileExist(u.bn) {
+	if common.FileExist(u.bn) {
 		if ui, er := DecodeUploadInfoFile(u.bn); er == nil {
 			return ui
 		}

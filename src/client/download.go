@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"dxkite.cn/go-storage/src/bitset"
 	"dxkite.cn/go-storage/src/block"
-	"dxkite.cn/go-storage/src/config"
+	"dxkite.cn/go-storage/src/common"
 	"dxkite.cn/go-storage/src/image"
 	"dxkite.cn/go-storage/src/meta"
 	"encoding/hex"
@@ -87,7 +87,7 @@ func (d *MetaDownloader) initMeta(metaFile string) error {
 			return er
 		}
 		d.Info = *m
-	} else if strings.Index(metaFile, config.BASE_PROTOCOL+"://") == 0 {
+	} else if strings.Index(metaFile, common.BASE_PROTOCOL+"://") == 0 {
 		// storage://meta?dl=base64_encode(meta)
 		m, er := meta.DecodeFromMetaProtocol(metaFile)
 		if er != nil {
@@ -120,8 +120,8 @@ func (d *MetaDownloader) init(metaFile, p string) (string, error) {
 	log.Println("check enable", d.Check)
 
 	_ = os.MkdirAll(p, os.ModePerm)
-	df := path.Join(p, d.Name+config.EXT_DOWNLOADING)
-	if FileExist(df) {
+	df := path.Join(p, d.Name+common.EXT_DOWNLOADING)
+	if common.FileExist(df) {
 		log.Println("reload download status")
 		dd, err := DecodeToFile(df)
 		if err != nil {
@@ -152,17 +152,6 @@ func (d *MetaDownloader) init(metaFile, p string) (string, error) {
 		}
 	}
 	return df, nil
-}
-
-func FileExist(path string) bool {
-	_, err := os.Stat(path)
-	if err != nil {
-		if os.IsExist(err) { // 根据错误类型进行判断
-			return true
-		}
-		return false
-	}
-	return true
 }
 
 type DownloadRetryable struct {

@@ -1,7 +1,7 @@
 package client
 
 import (
-	"dxkite.cn/go-storage/src/install"
+	"dxkite.cn/go-storage/src/util"
 	"log"
 )
 
@@ -17,10 +17,18 @@ func (Client) Upload(path string, bs int) {
 }
 
 func Install(path string) {
-	if er := install.CreateHelper(path); er != nil {
+	if er := util.Install(path); er != nil {
 		log.Println("error install", er)
 	} else {
 		log.Println("install success")
+	}
+}
+
+func Uninstall(path string) {
+	if er := util.Uninstall(path); er != nil {
+		log.Println("error uninstall", er)
+	} else {
+		log.Println("uninstall success")
 	}
 }
 

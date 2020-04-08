@@ -2,11 +2,13 @@ package main
 
 import (
 	"dxkite.cn/go-storage/src/client"
+	"dxkite.cn/go-storage/src/common"
 	"flag"
 	"log"
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 )
 
 func init() {
@@ -14,9 +16,11 @@ func init() {
 }
 
 func main() {
-	var dl = flag.String("dl", "", "download to dl")
-	var meta = flag.Bool("meta", false, "use meta file")
+	var dl = flag.String("path", "", "download to dl")
+
 	var install = flag.Bool("install", false, "install")
+	var uninstall = flag.Bool("uninstall", false, "uninstall")
+
 	var uncheck = flag.Bool("uncheck", false, "uncheck hash after downloaded")
 	var block = flag.Int("block_size", 2, "block size, mb")
 	var help = flag.Bool("help", false, "print help info")
@@ -31,14 +35,19 @@ func main() {
 		return
 	}
 
+	if *uninstall {
+		client.Uninstall(p)
+		return
+	}
+
 	if *help || flag.NArg() < 1 {
 		flag.Usage()
 		return
 	}
 
 	name := flag.Arg(0)
-	if client.FileExist(name) {
-		if *meta {
+	if common.FileExist(name) {
+		if strings.HasSuffix(name, ".meta") {
 			p, _ := filepath.Abs(name)
 			*dl = filepath.Dir(p)
 			client.Default.Download(name, *dl, *uncheck == false, *num, *retry)
