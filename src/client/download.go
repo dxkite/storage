@@ -133,14 +133,14 @@ func (d *MetaDownloader) init(metaFile, p string) (string, error) {
 		}
 		d.DownloadMeta = *dd
 		d.Downloaded = 0
-		if er := d.makeDownloadFile(pp); er != nil {
+		if er := d.parepareDownloadFile(pp); er != nil {
 			return df, er
 		}
 	} else {
 		d.Index = bitset.New(int64(len(d.Block)))
 		d.DownloadTotal = len(d.Block)
 		d.Downloaded = 0
-		if er := d.makeDownloadFile(pp); er != nil {
+		if er := d.parepareDownloadFile(pp); er != nil {
 			return df, er
 		}
 	}
@@ -149,21 +149,16 @@ func (d *MetaDownloader) init(metaFile, p string) (string, error) {
 
 func (d *MetaDownloader) checkBlock(bb meta.DataBlock) bool {
 	start, end := d.calculateRange(bb.Index)
-
 	rb := block.NewBlock(start, end, nil)
 	if buf, err := d.File.ReadBlock(rb); err != nil {
 		return false
 	} else if bytes.Equal(ByteHash(buf), bb.Hash) {
 		return true
-	} /*else {
-		log.Println("want hash", hex.EncodeToString(bb.Hash), "got hash", hex.EncodeToString(ByteHash(buf)))
-		log.Println("block", bb.Index, "start", start, "end", end, "size", end-start)
-		log.Println("data", len(buf), hex.EncodeToString(buf[:10]), hex.EncodeToString(buf[len(buf)-10:]))
-	}*/
+	}
 	return false
 }
 
-func (d *MetaDownloader) makeDownloadFile(path string) error {
+func (d *MetaDownloader) parepareDownloadFile(path string) error {
 	flag := os.O_CREATE | os.O_RDWR
 	exist := common.FileExist(path)
 
@@ -230,9 +225,6 @@ func (r *DownloadRetryable) downloadBlock(dataBlock *meta.DataBlock) (block.Bloc
 
 	log.Printf("block %d dwonloaded", dataBlock.Index)
 	start, end := r.d.calculateRange(dataBlock.Index)
-	//xb := block.NewBlock(start, end, buf)
-	//log.Println("block", dataBlock.Index, "start", start, "end", end, "size", end-start /**/)
-	//log.Println("data", len(buf), hex.EncodeToString(buf[:10]), hex.EncodeToString(buf[len(buf)-10:]))
 	return block.NewBlock(start, end, buf), err
 }
 

@@ -16,7 +16,7 @@ func init() {
 }
 
 func main() {
-	var dl = flag.String("path", "", "download to dl")
+	var save = flag.String("path", "", "download save path")
 
 	var install = flag.Bool("install", false, "install")
 	var uninstall = flag.Bool("uninstall", false, "uninstall")
@@ -47,21 +47,21 @@ func main() {
 
 	name := flag.Arg(0)
 	if common.FileExist(name) {
-		if strings.HasSuffix(name, ".meta") {
-			if len(*dl) == 0 {
+		if strings.HasSuffix(name, common.EXT_META) {
+			if len(*save) == 0 {
 				p, _ := filepath.Abs(name)
-				*dl = filepath.Dir(p)
+				*save = filepath.Dir(p)
 			}
-			client.Default.Download(name, *dl, *uncheck == false, *num, *retry)
+			client.Default.Download(name, *save, *uncheck == false, *num, *retry)
 		} else {
 			client.Default.Upload(name, *block)
 		}
 	} else {
-		if len(*dl) == 0 {
+		if len(*save) == 0 {
 			pp := filepath.Dir(p)
-			*dl = path.Join(pp, "Download")
-			_ = os.MkdirAll(*dl, os.ModePerm)
+			*save = path.Join(pp, "Download")
+			_ = os.MkdirAll(*save, os.ModePerm)
 		}
-		client.Default.Download(name, *dl, *uncheck == false, *num, *retry)
+		client.Default.Download(name, *save, *uncheck == false, *num, *retry)
 	}
 }
