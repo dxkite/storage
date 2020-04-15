@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -52,8 +53,12 @@ func (d *MetaDownloader) DownloadToFile(path string) error {
 		return nil
 	}
 	defer func() { _ = d.File.Close() }()
-	if er := d.download(df, d.Thread); er != nil {
-		return er
+	if meta.DataType(d.Type) == meta.Type_URI {
+		if er := d.download(df, d.Thread); er != nil {
+			return er
+		}
+	} else {
+		return errors.New("unsupported stream meta")
 	}
 	if d.Check && d.File.CheckSum() == false {
 		return errors.New("hash check error")
@@ -133,14 +138,14 @@ func (d *MetaDownloader) init(metaFile, p string) (string, error) {
 		}
 		d.DownloadMeta = *dd
 		d.Downloaded = 0
-		if er := d.parepareDownloadFile(pp); er != nil {
+		if er := d.prepareDownloadFile(pp); er != nil {
 			return df, er
 		}
 	} else {
 		d.Index = bitset.New(int64(len(d.Block)))
 		d.DownloadTotal = len(d.Block)
 		d.Downloaded = 0
-		if er := d.parepareDownloadFile(pp); er != nil {
+		if er := d.prepareDownloadFile(pp); er != nil {
 			return df, er
 		}
 	}
@@ -158,7 +163,7 @@ func (d *MetaDownloader) checkBlock(bb meta.DataBlock) bool {
 	return false
 }
 
-func (d *MetaDownloader) parepareDownloadFile(path string) error {
+func (d *MetaDownloader) prepareDownloadFile(path string) error {
 	flag := os.O_CREATE | os.O_RDWR
 	exist := common.FileExist(path)
 
@@ -201,16 +206,19 @@ func (r *DownloadRetryable) downloadBlock(dataBlock *meta.DataBlock) (block.Bloc
 	// 下载成功
 	var retry = false
 	var err error
-	buf, er := GetRemoteData(string(dataBlock.Data))
+
+	buf, er := GetRemoteData(string(dataBlock.Data), meta.EncodeType(r.d.Encode))
 	if er != nil {
 		retry = true
 		err = er
 	}
 
-	bh := ByteHash(buf)
-	if bytes.Equal(bh, dataBlock.Hash) == false {
-		err = errors.New("hash check error")
-		retry = true
+	if err == nil {
+		bh := ByteHash(buf)
+		if bytes.Equal(bh, dataBlock.Hash) == false {
+			err = errors.New("hash check error")
+			retry = true
+		}
 	}
 
 	if retry {
@@ -270,15 +278,21 @@ func (d *Downloader) downloadBlock(df string, dataBlock *meta.DataBlock) error {
 	return nil
 }
 
-func GetRemoteData(url string) ([]byte, error) {
+func GetRemoteData(url string, encode meta.EncodeType) ([]byte, error) {
 	buf := &bytes.Buffer{}
 	r, er := http.Get(url)
 	if er != nil {
 		return nil, er
 	}
 	defer func() { _ = r.Body.Close() }()
-	if err := image.Decode(r.Body, buf); err != nil {
-		return nil, err
+	if encode == meta.Encode_Image {
+		if err := image.Decode(r.Body, buf); err != nil {
+			return nil, err
+		}
+	} else {
+		if _, err := io.Copy(buf, r.Body); err != nil {
+			return nil, err
+		}
 	}
 	return buf.Bytes(), nil
 }
