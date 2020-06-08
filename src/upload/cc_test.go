@@ -9,9 +9,9 @@ import (
 	"testing"
 )
 
-func TestAli_Upload(t *testing.T) {
+func TestCcUploader_Upload(t *testing.T) {
 	if data, err := ioutil.ReadFile("./test/1.png"); err == nil {
-		res, er := Upload(ALI, &FileObject{
+		res, er := Upload(CC, &FileObject{
 			Name: "cdn.png",
 			Data: data,
 		})

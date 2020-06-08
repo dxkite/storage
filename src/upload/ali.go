@@ -23,13 +23,13 @@ const ALI = "ali"
 
 func init() {
 	// 注册阿里文件图床
-	Register(ALI, &Ali{})
+	Register(ALI, &AliUploader{})
 }
 
-type Ali struct {
+type AliUploader struct {
 }
 
-func (*Ali) Upload(object *FileObject) (*Result, error) {
+func (*AliUploader) Upload(object *FileObject) (*Result, error) {
 	url := "https://kfupload.alibaba.com/mupload"
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)
