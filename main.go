@@ -3,6 +3,7 @@ package main
 import (
 	"dxkite.cn/go-storage/src/client"
 	"dxkite.cn/go-storage/src/common"
+	"dxkite.cn/go-storage/src/upload"
 	"flag"
 	"log"
 	"os"
@@ -17,6 +18,7 @@ func init() {
 
 func main() {
 	var save = flag.String("path", "", "download save path")
+	var cloud = flag.String("cloud", upload.ALI, "upload cloud")
 
 	var install = flag.Bool("install", false, "install")
 	var uninstall = flag.Bool("uninstall", false, "uninstall")
@@ -54,7 +56,7 @@ func main() {
 			}
 			client.Default.Download(name, *save, *uncheck == false, *num, *retry)
 		} else {
-			client.Default.Upload(name, *block)
+			client.Default.Upload(name, *cloud, *block)
 		}
 	} else {
 		if len(*save) == 0 {

@@ -8,8 +8,8 @@ import (
 type Client struct {
 }
 
-func (Client) Upload(path string, bs int) {
-	u := NewUploader(int64(bs*1024*1024), "ali")
+func (Client) Upload(path, cloud string, bs int) {
+	u := NewUploader(int64(bs*1024*1024), cloud)
 	if er := u.UploadFile(path); er != nil {
 		log.Fatal("upload error:", er)
 	}

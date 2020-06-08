@@ -19,9 +19,11 @@ type AliResp struct {
 	Hash  string `json:"hash"`
 }
 
+const ALI = "ali"
+
 func init() {
 	// 注册阿里文件图床
-	Register("ali", &Ali{})
+	Register(ALI, &Ali{})
 }
 
 type Ali struct {

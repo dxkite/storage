@@ -7,9 +7,9 @@ import (
 )
 
 func TestAli_Upload(t *testing.T) {
-	if data, err := ioutil.ReadFile("./test/cdn-video-0000.jpg"); err == nil {
-		res, er := Upload("ali", &FileObject{
-			Name: "cdn.jpg",
+	if data, err := ioutil.ReadFile("./test/1.png"); err == nil {
+		res, er := Upload(ALI, &FileObject{
+			Name: "cdn.png",
 			Data: data,
 		})
 		if er != nil {
