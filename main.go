@@ -18,7 +18,7 @@ func init() {
 
 func main() {
 	var save = flag.String("path", "", "download save path")
-	var cloud = flag.String("cloud", upload.ALI, "upload cloud")
+	var cloud = flag.String("cloud", upload.JUEJIN, "upload cloud")
 
 	var install = flag.Bool("install", false, "install")
 	var uninstall = flag.Bool("uninstall", false, "uninstall")
