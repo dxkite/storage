@@ -15,23 +15,23 @@ type DataItem struct {
 	Domain string `json:"domain"`
 }
 
-type JuejinResponse struct {
-	Status   string   `json:"m"`
-	DataItem DataItem `json:"d"`
+type JueJinResponse struct {
+	Status string   `json:"m"`
+	Data   DataItem `json:"d"`
 }
 
 const JUEJIN = "juejin"
 
-type JuejinUploader struct {
+type JueJinUploader struct {
 }
 
 func init() {
 	Register(JUEJIN, func(config Config) Uploader {
-		return &JuejinUploader{}
+		return &JueJinUploader{}
 	})
 }
 
-func (*JuejinUploader) Upload(object *FileObject) (*Result, error) {
+func (*JueJinUploader) Upload(object *FileObject) (*Result, error) {
 	url := "https://cdn-ms.juejin.im/v1/upload?bucket=gold-user-assets"
 	var b bytes.Buffer
 
@@ -58,13 +58,13 @@ func (*JuejinUploader) Upload(object *FileObject) (*Result, error) {
 		return nil, errors.New(fmt.Sprintf("read body error: %v", rer))
 	}
 
-	resp := new(JuejinResponse)
+	resp := new(JueJinResponse)
 	if er := json.Unmarshal(body, resp); er == nil {
 		if resp.Status != "ok" {
 			return nil, errors.New("juejin upload error: " + string(body))
 		}
 		return &Result{
-			Url: "https://" + resp.DataItem.Domain + "/" + resp.DataItem.Url,
+			Url: "https://" + resp.Data.Domain + "/" + resp.Data.Url,
 			Raw: body,
 		}, nil
 	} else {
