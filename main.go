@@ -18,7 +18,7 @@ func init() {
 
 func main() {
 	var save = flag.String("path", "", "download save path")
-	var cloud = flag.String("cloud", upload.JUEJIN, "upload cloud")
+	var usn = flag.String("usn", upload.JUEJIN, "upload usn")
 
 	var install = flag.Bool("install", false, "install")
 	var uninstall = flag.Bool("uninstall", false, "uninstall")
@@ -56,7 +56,7 @@ func main() {
 			}
 			client.Default.Download(name, *save, *uncheck == false, *num, *retry)
 		} else {
-			client.Default.Upload(name, *cloud, *block)
+			client.Default.Upload(name, *usn, *block)
 		}
 	} else {
 		if len(*save) == 0 {

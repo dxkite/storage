@@ -7,17 +7,18 @@ import (
 	"dxkite.cn/go-storage/src/meta"
 	"dxkite.cn/go-storage/src/upload"
 	"encoding/gob"
+	"encoding/hex"
+	"fmt"
 	"io"
 	"log"
 	"math"
 	"os"
 	"path/filepath"
-	"strconv"
 )
 
 type Uploader struct {
 	Size       int64
-	Type       string
+	Usn        string
 	bn         string
 	UploadInfo *UploadInfo
 }
@@ -27,10 +28,10 @@ type UploadInfo struct {
 	Meta  *meta.Info
 }
 
-func NewUploader(bs int64, t string) *Uploader {
+func NewUploader(bs int64, usn string) *Uploader {
 	return &Uploader{
 		Size: bs,
-		Type: t,
+		Usn:  usn,
 	}
 }
 
@@ -42,6 +43,7 @@ func (u *Uploader) UploadFile(name string) error {
 	var info = SteamHash(file)
 	var size = SteamSize(file)
 	base := filepath.Base(file.Name())
+	log.Printf("upload to %s\n", u.Usn)
 	log.Printf("upload meta info %x %s %d\n", info, base, size)
 	u.bn = name + common.EXT_UPLOADING
 
@@ -52,6 +54,13 @@ func (u *Uploader) UploadFile(name string) error {
 	var index = int64(0)
 	var err error
 	var buf = make([]byte, u.Size)
+	var uploader upload.Uploader
+
+	if u, er := upload.Create(u.Usn); er != nil {
+		return er
+	} else {
+		uploader = u
+	}
 
 	for {
 		nr, er := file.Read(buf)
@@ -62,6 +71,7 @@ func (u *Uploader) UploadFile(name string) error {
 				index++
 				continue
 			}
+
 			hh := ByteHash(buf[:nr])
 			var encoded []byte
 			if b, er := image.EncodeByte(buf[:nr]); er != nil {
@@ -71,8 +81,8 @@ func (u *Uploader) UploadFile(name string) error {
 				encoded = b
 			}
 
-			if r, er := upload.Upload(u.Type, &upload.FileObject{
-				Name: strconv.Itoa(int(index)) + ".png",
+			if r, er := uploader.Upload(&upload.FileObject{
+				Name: fmt.Sprintf("%s-%d.png", hex.EncodeToString(info), index),
 				Data: encoded,
 			}); er != nil {
 				err = er
@@ -88,7 +98,6 @@ func (u *Uploader) UploadFile(name string) error {
 				log.Printf("uploaded %d/%d block\n", index+1, bc)
 				_ = EncodeUploadInfo(u.bn, ui)
 			}
-
 		}
 
 		if er != nil {

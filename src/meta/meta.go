@@ -75,13 +75,17 @@ func EncodeToFile(path string, info *Info) error {
 	if er != nil {
 		return er
 	}
+	defer func() { _ = f.Close() }()
+	return EncodeToStream(f, info)
+}
+
+func EncodeToStream(f io.Writer, info *Info) error {
 	rand.Seed(time.Now().Unix())
 	xor := byte(rand.Intn(254) + 1)
-	defer func() { _ = f.Close() }()
-	if _, er = f.WriteString(Magic); er != nil {
+	if _, er := f.Write([]byte(Magic)); er != nil {
 		return er
 	}
-	if _, er = f.Write([]byte{Version, xor}); er != nil {
+	if _, er := f.Write([]byte{Version, xor}); er != nil {
 		return er
 	}
 	b := bencode.NewEncoder(NewXORWriter(xor, f))
@@ -144,7 +148,7 @@ func DecodeFromStream(f io.Reader) (*Info, error) {
 	info := new(Info)
 	der := b.Decode(&info)
 	if der != nil {
-		return nil, der
+		return nil, errors.New("bencode: " + der.Error())
 	}
 	return info, nil
 }

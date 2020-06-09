@@ -10,31 +10,27 @@ import (
 	"net/http"
 )
 
-type CcItem struct {
-	Url string `json:"url"`
+type ToutiaoResponse struct {
+	Status string `json:"message"`
+	Url    string `json:"web_url"`
 }
 
-type CcResponse struct {
-	Error        int      `json:"total_error"`
-	SuccessImage []CcItem `json:"success_image"`
-}
+const TOUTIAO = "toutiao"
 
-const CC = "cc"
-
-type CcUploader struct {
+type TouTiaoUploader struct {
 }
 
 func init() {
-	Register(CC, func(config Config) Uploader {
-		return &CcUploader{}
+	Register(TOUTIAO, func(config Config) Uploader {
+		return &TouTiaoUploader{}
 	})
 }
 
-func (*CcUploader) Upload(object *FileObject) (*Result, error) {
-	url := "https://upload.cc/image_upload"
+func (*TouTiaoUploader) Upload(object *FileObject) (*Result, error) {
+	url := "https://mp.toutiao.com/upload_photo/?type=json"
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)
-	if fw, e := w.CreateFormFile("uploaded_file[]", object.Name); e == nil && fw != nil {
+	if fw, e := w.CreateFormFile("photo", object.Name); e == nil && fw != nil {
 		if _, er := fw.Write(object.Data); er != nil {
 			return nil, er
 		}
@@ -57,15 +53,13 @@ func (*CcUploader) Upload(object *FileObject) (*Result, error) {
 		return nil, errors.New(fmt.Sprintf("read body error: %v", rer))
 	}
 
-	//fmt.Println(string(body))
-
-	resp := new(CcResponse)
+	resp := new(ToutiaoResponse)
 	if er := json.Unmarshal(body, resp); er == nil {
-		if resp.Error != 0 {
-			return nil, errors.New("cc upload error: " + string(body))
+		if resp.Status != "success" {
+			return nil, errors.New("TouTiao upload error: " + string(body))
 		}
 		return &Result{
-			Url: "https://upload.cc/" + resp.SuccessImage[0].Url,
+			Url: resp.Url,
 			Raw: body,
 		}, nil
 	} else {

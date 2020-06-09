@@ -14,11 +14,9 @@ func NewXORReader(n byte, rw io.Reader) io.Reader {
 	}
 }
 
-// 写包装
 func (c XORReader) Read(b []byte) (n int, err error) {
-	n, re := c.Reader.Read(b)
-	if re != nil {
-		err = re
+	n, err = c.Reader.Read(b)
+	if err != nil {
 		return
 	}
 	for i, v := range b {
@@ -32,14 +30,13 @@ type XORWriter struct {
 	Value byte
 }
 
-func NewXORWriter(n byte, rw io.ReadWriter) io.Writer {
+func NewXORWriter(n byte, w io.Writer) io.Writer {
 	return XORWriter{
-		Writer: rw,
+		Writer: w,
 		Value:  n,
 	}
 }
 
-// 读包装
 func (c XORWriter) Write(b []byte) (n int, err error) {
 	for i, v := range b {
 		b[i] = v ^ c.Value

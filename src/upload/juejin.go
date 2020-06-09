@@ -20,29 +20,32 @@ type JuejinResponse struct {
 	DataItem DataItem `json:"d"`
 }
 
-const JUEJIN = "cc"
+const JUEJIN = "juejin"
 
 type JuejinUploader struct {
 }
 
 func init() {
-	// 注册阿里文件图床
-	Register(JUEJIN, &JuejinUploader{})
+	Register(JUEJIN, func(config Config) Uploader {
+		return &JuejinUploader{}
+	})
 }
 
 func (*JuejinUploader) Upload(object *FileObject) (*Result, error) {
 	url := "https://cdn-ms.juejin.im/v1/upload?bucket=gold-user-assets"
 	var b bytes.Buffer
+
 	w := multipart.NewWriter(&b)
 	if fw, e := w.CreateFormFile("file", object.Name); e == nil && fw != nil {
 		if _, er := fw.Write(object.Data); er != nil {
 			return nil, er
 		}
 	}
-	w.Close()
+	if er := w.Close(); er != nil {
+		return nil, er
+	}
 
 	req, _ := http.NewRequest(http.MethodPost, url, &b)
-	req.Header.Set("Host", "cdn-ms.juejin.im")
 	req.Header.Set("Content-Type", w.FormDataContentType())
 	res, er := http.DefaultClient.Do(req)
 	if er != nil {
@@ -55,12 +58,10 @@ func (*JuejinUploader) Upload(object *FileObject) (*Result, error) {
 		return nil, errors.New(fmt.Sprintf("read body error: %v", rer))
 	}
 
-	//fmt.Println(string(body))
-
 	resp := new(JuejinResponse)
 	if er := json.Unmarshal(body, resp); er == nil {
 		if resp.Status != "ok" {
-			return nil, errors.New("cc upload error: " + resp.Status)
+			return nil, errors.New("juejin upload error: " + string(body))
 		}
 		return &Result{
 			Url: "https://" + resp.DataItem.Domain + "/" + resp.DataItem.Url,

@@ -207,7 +207,7 @@ func (r *DownloadRetryable) downloadBlock(dataBlock *meta.DataBlock) (block.Bloc
 	var retry = false
 	var err error
 
-	buf, er := GetRemoteData(string(dataBlock.Data), meta.EncodeType(r.d.Encode))
+	buf, er := GetBlockData(string(dataBlock.Data), meta.EncodeType(r.d.Encode), meta.DataType(r.d.Type))
 	if er != nil {
 		retry = true
 		err = er
@@ -278,21 +278,30 @@ func (d *Downloader) downloadBlock(df string, dataBlock *meta.DataBlock) error {
 	return nil
 }
 
-func GetRemoteData(url string, encode meta.EncodeType) ([]byte, error) {
+func GetBlockData(url string, encode meta.EncodeType, dt meta.DataType) ([]byte, error) {
+	var r io.Reader
 	buf := &bytes.Buffer{}
-	r, er := http.Get(url)
-	if er != nil {
-		return nil, er
+
+	if dt == meta.Type_Stream {
+		r = strings.NewReader(url)
+	} else {
+		rr, er := http.Get(url)
+		if er != nil {
+			return nil, er
+		}
+		defer func() { _ = rr.Body.Close() }()
+		r = rr.Body
 	}
-	defer func() { _ = r.Body.Close() }()
+
 	if encode == meta.Encode_Image {
-		if err := image.Decode(r.Body, buf); err != nil {
+		if err := image.Decode(r, buf); err != nil {
 			return nil, err
 		}
 	} else {
-		if _, err := io.Copy(buf, r.Body); err != nil {
+		if _, err := io.Copy(buf, r); err != nil {
 			return nil, err
 		}
 	}
+
 	return buf.Bytes(), nil
 }

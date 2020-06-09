@@ -23,7 +23,9 @@ const ALI = "ali"
 
 func init() {
 	// 注册阿里文件图床
-	Register(ALI, &AliUploader{})
+	Register(ALI, func(config Config) Uploader {
+		return &AliUploader{}
+	})
 }
 
 type AliUploader struct {
@@ -48,7 +50,9 @@ func (*AliUploader) Upload(object *FileObject) (*Result, error) {
 			return nil, er
 		}
 	}
-	w.Close()
+	if er := w.Close(); er != nil {
+		return nil, er
+	}
 
 	req, _ := http.NewRequest(http.MethodPost, url, &b)
 	req.Header.Set("Host", "kfupload.alibaba.com")
