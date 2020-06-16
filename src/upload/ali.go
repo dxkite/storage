@@ -2,6 +2,7 @@ package upload
 
 import (
 	"bytes"
+	"dxkite.cn/go-storage/src/common"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -57,7 +58,7 @@ func (*AliUploader) Upload(object *FileObject) (*Result, error) {
 	req, _ := http.NewRequest(http.MethodPost, url, &b)
 	req.Header.Set("Host", "kfupload.alibaba.com")
 	req.Header.Set("Content-Type", w.FormDataContentType())
-	res, er := http.DefaultClient.Do(req)
+	res, er := common.Client.Do(req)
 	if er != nil {
 		return nil, er
 	}

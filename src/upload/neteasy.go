@@ -2,6 +2,7 @@ package upload
 
 import (
 	"bytes"
+	"dxkite.cn/go-storage/src/common"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -43,7 +44,7 @@ func (*NetEasy163Uploader) Upload(object *FileObject) (*Result, error) {
 
 	req, _ := http.NewRequest(http.MethodPost, url, &b)
 	req.Header.Set("Content-Type", w.FormDataContentType())
-	res, er := http.DefaultClient.Do(req)
+	res, er := common.Client.Do(req)
 	if er != nil {
 		return nil, errors.New(fmt.Sprintf("request error: %v", er))
 	}

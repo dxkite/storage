@@ -2,6 +2,7 @@ package upload
 
 import (
 	"bytes"
+	"dxkite.cn/go-storage/src/common"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,23 +16,23 @@ type DataItem struct {
 	Domain string `json:"domain"`
 }
 
-type JueJinResponse struct {
-	Status string   `json:"m"`
-	Data   DataItem `json:"d"`
+type JuejinResponse struct {
+	Status   string   `json:"m"`
+	DataItem DataItem `json:"d"`
 }
 
 const JUEJIN = "juejin"
 
-type JueJinUploader struct {
+type JuejinUploader struct {
 }
 
 func init() {
 	Register(JUEJIN, func(config Config) Uploader {
-		return &JueJinUploader{}
+		return &JuejinUploader{}
 	})
 }
 
-func (*JueJinUploader) Upload(object *FileObject) (*Result, error) {
+func (*JuejinUploader) Upload(object *FileObject) (*Result, error) {
 	url := "https://cdn-ms.juejin.im/v1/upload?bucket=gold-user-assets"
 	var b bytes.Buffer
 
@@ -47,7 +48,7 @@ func (*JueJinUploader) Upload(object *FileObject) (*Result, error) {
 
 	req, _ := http.NewRequest(http.MethodPost, url, &b)
 	req.Header.Set("Content-Type", w.FormDataContentType())
-	res, er := http.DefaultClient.Do(req)
+	res, er := common.Client.Do(req)
 	if er != nil {
 		return nil, errors.New(fmt.Sprintf("request error: %v", er))
 	}
@@ -58,13 +59,13 @@ func (*JueJinUploader) Upload(object *FileObject) (*Result, error) {
 		return nil, errors.New(fmt.Sprintf("read body error: %v", rer))
 	}
 
-	resp := new(JueJinResponse)
+	resp := new(JuejinResponse)
 	if er := json.Unmarshal(body, resp); er == nil {
 		if resp.Status != "ok" {
 			return nil, errors.New("juejin upload error: " + string(body))
 		}
 		return &Result{
-			Url: "https://" + resp.Data.Domain + "/" + resp.Data.Url,
+			Url: "https://" + resp.DataItem.Domain + "/" + resp.DataItem.Url,
 			Raw: body,
 		}, nil
 	} else {

@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net/http"
 	"os"
 	"path"
 	"strings"
@@ -285,7 +284,7 @@ func GetBlockData(url string, encode meta.EncodeType, dt meta.DataType) ([]byte,
 	if dt == meta.Type_Stream {
 		r = strings.NewReader(url)
 	} else {
-		rr, er := http.Get(url)
+		rr, er := common.Client.Get(url)
 		if er != nil {
 			return nil, er
 		}
