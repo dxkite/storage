@@ -1,7 +1,7 @@
 package client
 
 import (
-	"dxkite.cn/go-storage/src/util"
+	"dxkite.cn/storage/src/util"
 	"log"
 )
 

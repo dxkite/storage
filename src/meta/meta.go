@@ -2,7 +2,7 @@ package meta
 
 import (
 	"bytes"
-	"dxkite.cn/go-storage/src/common"
+	"dxkite.cn/storage/src/common"
 	"encoding/base64"
 	"errors"
 	"fmt"

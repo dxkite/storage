@@ -1,4 +1,4 @@
-module dxkite.cn/go-storage
+module dxkite.cn/storage
 
 go 1.13
 

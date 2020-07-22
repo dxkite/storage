@@ -1,8 +1,8 @@
 package main
 
 import (
-	"dxkite.cn/go-storage/src/client"
-	"dxkite.cn/go-storage/src/common"
+	"dxkite.cn/storage/src/client"
+	"dxkite.cn/storage/src/common"
 	"flag"
 	"log"
 	"os"

@@ -1,8 +1,8 @@
 package client
 
 import (
-	"dxkite.cn/go-storage/src/bitset"
-	"dxkite.cn/go-storage/src/meta"
+	"dxkite.cn/storage/src/bitset"
+	"dxkite.cn/storage/src/meta"
 	"encoding/gob"
 	"os"
 )

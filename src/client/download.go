@@ -2,11 +2,11 @@ package client
 
 import (
 	"bytes"
-	"dxkite.cn/go-storage/src/bitset"
-	"dxkite.cn/go-storage/src/block"
-	"dxkite.cn/go-storage/src/common"
-	"dxkite.cn/go-storage/src/image"
-	"dxkite.cn/go-storage/src/meta"
+	"dxkite.cn/storage/src/bitset"
+	"dxkite.cn/storage/src/block"
+	"dxkite.cn/storage/src/common"
+	"dxkite.cn/storage/src/image"
+	"dxkite.cn/storage/src/meta"
 	"encoding/hex"
 	"errors"
 	"fmt"

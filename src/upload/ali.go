@@ -2,7 +2,7 @@ package upload
 
 import (
 	"bytes"
-	"dxkite.cn/go-storage/src/common"
+	"dxkite.cn/storage/src/common"
 	"encoding/json"
 	"errors"
 	"io/ioutil"

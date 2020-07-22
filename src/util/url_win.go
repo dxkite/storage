@@ -3,7 +3,7 @@
 package util
 
 import (
-	"dxkite.cn/go-storage/src/common"
+	"dxkite.cn/storage/src/common"
 	"fmt"
 	"golang.org/x/sys/windows/registry"
 	"strconv"
