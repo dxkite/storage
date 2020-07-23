@@ -2,7 +2,6 @@ package upload
 
 import (
 	"bytes"
-	"dxkite.cn/storage/common"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -48,7 +47,7 @@ func (*JuejinUploader) Upload(object *FileObject) (*Result, error) {
 
 	req, _ := http.NewRequest(http.MethodPost, url, &b)
 	req.Header.Set("Content-Type", w.FormDataContentType())
-	res, er := common.Client.Do(req)
+	res, er := Client.Do(req)
 	if er != nil {
 		return nil, errors.New(fmt.Sprintf("request error: %v", er))
 	}

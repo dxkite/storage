@@ -1,8 +1,7 @@
-package uploader
+package storage
 
 import (
 	"dxkite.cn/storage/bitset"
-	"dxkite.cn/storage/common"
 	"dxkite.cn/storage/image"
 	"dxkite.cn/storage/meta"
 	"dxkite.cn/storage/upload"
@@ -40,12 +39,12 @@ func (u *Uploader) UploadFile(name string) error {
 	if oer != nil {
 		return oer
 	}
-	var info = common.SteamHash(file)
-	var size = common.SteamSize(file)
+	var info = SteamHash(file)
+	var size = SteamSize(file)
 	base := filepath.Base(file.Name())
 	log.Printf("upload to %s\n", u.Usn)
 	log.Printf("upload meta info %x %s %d\n", info, base, size)
-	u.bn = name + common.EXT_UPLOADING
+	u.bn = name + EXT_UPLOADING
 
 	bc := int64(math.Ceil(float64(size) / float64(u.Size)))
 	ui := u.GetUploadInfo(base, size, bc, info)
@@ -72,7 +71,7 @@ func (u *Uploader) UploadFile(name string) error {
 				continue
 			}
 
-			hh := common.ByteHash(buf[:nr])
+			hh := ByteHash(buf[:nr])
 			var encoded []byte
 			if b, er := image.EncodeByte(buf[:nr]); er != nil {
 				err = er
@@ -113,7 +112,7 @@ func (u *Uploader) UploadFile(name string) error {
 		return err
 	}
 	ui.Meta.Status = meta.Finish
-	if er := meta.EncodeToFile(name+common.EXT_META, ui.Meta); er != nil {
+	if er := meta.EncodeToFile(name+EXT_META, ui.Meta); er != nil {
 		_ = EncodeUploadInfo(u.bn, ui)
 		return er
 	}
@@ -123,7 +122,7 @@ func (u *Uploader) UploadFile(name string) error {
 }
 
 func (u *Uploader) GetUploadInfo(name string, size, block int64, info []byte) *UploadInfo {
-	if common.FileExist(u.bn) {
+	if FileExist(u.bn) {
 		if ui, er := DecodeUploadInfoFile(u.bn); er == nil {
 			return ui
 		}

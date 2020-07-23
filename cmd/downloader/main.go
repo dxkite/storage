@@ -1,8 +1,7 @@
 package main
 
 import (
-	"dxkite.cn/storage/client"
-	"dxkite.cn/storage/common"
+	"dxkite.cn/storage"
 	"flag"
 	"log"
 	"os"
@@ -31,12 +30,12 @@ func main() {
 	p, _ := filepath.Abs(os.Args[0])
 
 	if *install {
-		client.Install(p)
+		storage.Install(p)
 		return
 	}
 
 	if *uninstall {
-		client.Uninstall(p)
+		storage.Uninstall(p)
 		return
 	}
 
@@ -46,18 +45,18 @@ func main() {
 	}
 
 	name := flag.Arg(0)
-	if common.FileExist(name) && strings.HasSuffix(name, common.EXT_META) {
+	if storage.FileExist(name) && strings.HasSuffix(name, storage.EXT_META) {
 		if len(*save) == 0 {
 			p, _ := filepath.Abs(name)
 			*save = filepath.Dir(p)
 		}
-		client.Default.Download(name, *save, *uncheck == false, *num, *retry)
+		storage.Download(name, *save, *uncheck == false, *num, *retry)
 	} else {
 		if len(*save) == 0 {
 			pp := filepath.Dir(p)
 			*save = path.Join(pp, "Download")
 			_ = os.MkdirAll(*save, os.ModePerm)
 		}
-		client.Default.Download(name, *save, *uncheck == false, *num, *retry)
+		storage.Download(name, *save, *uncheck == false, *num, *retry)
 	}
 }

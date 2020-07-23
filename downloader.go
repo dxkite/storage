@@ -1,12 +1,12 @@
-package downloader
+package storage
 
 import (
 	"bytes"
 	"dxkite.cn/storage/bitset"
 	"dxkite.cn/storage/block"
-	"dxkite.cn/storage/common"
 	"dxkite.cn/storage/image"
 	"dxkite.cn/storage/meta"
+	"dxkite.cn/storage/upload"
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
@@ -86,7 +86,7 @@ func (d *Downloader) checkBlock(bb meta.DataBlock) bool {
 	rb := block.NewBlock(start, end, nil)
 	if buf, err := d.File.ReadBlock(rb); err != nil {
 		return false
-	} else if bytes.Equal(common.ByteHash(buf), bb.Hash) {
+	} else if bytes.Equal(ByteHash(buf), bb.Hash) {
 		return true
 	}
 	return false
@@ -111,7 +111,7 @@ func (r *DownloadRetryable) downloadBlock(dataBlock *meta.DataBlock) (block.Bloc
 	}
 
 	if err == nil {
-		bh := common.ByteHash(buf)
+		bh := ByteHash(buf)
 		if bytes.Equal(bh, dataBlock.Hash) == false {
 			err = errors.New("hash check error")
 			retry = true
@@ -186,7 +186,7 @@ func (d *Downloader) GetBlockData(url string, encode meta.EncodeType, dt meta.Da
 	if dt == meta.Type_Stream {
 		r = strings.NewReader(url)
 	} else {
-		rr, er := common.HttpGet(url)
+		rr, er := upload.HttpGet(url)
 		if er != nil {
 			return nil, er
 		}
@@ -219,10 +219,10 @@ func (d *Downloader) MetaFromProtocol(path string) error {
 	if er != nil {
 		return er
 	}
-	if u.Scheme != common.BASE_PROTOCOL {
-		return errors.New("need protocol " + common.BASE_PROTOCOL)
+	if u.Scheme != BASE_PROTOCOL {
+		return errors.New("need protocol " + BASE_PROTOCOL)
 	}
-	if u.Host != common.HOST_META {
+	if u.Host != HOST_META {
 		return errors.New("need host meta")
 	}
 	dl := u.Query().Get("dl")
@@ -234,7 +234,7 @@ func (d *Downloader) MetaFromProtocol(path string) error {
 }
 
 func (d *Downloader) LoadFromUrl(url string) error {
-	if res, er := common.HttpGet(url); er != nil {
+	if res, er := upload.HttpGet(url); er != nil {
 		return er
 	} else {
 		defer func() { _ = res.Close() }()
@@ -260,7 +260,7 @@ func (d *Downloader) LoadFromStream(s io.Reader) error {
 }
 
 func (d *Downloader) Load(metaFile string) error {
-	if strings.Index(metaFile, common.BASE_PROTOCOL+"://") == 0 {
+	if strings.Index(metaFile, BASE_PROTOCOL+"://") == 0 {
 		// storage://meta?dl=base64_encode(meta-url)
 		return d.MetaFromProtocol(metaFile)
 	} else if strings.Index(metaFile, "https://") == 0 || strings.Index(metaFile, "http://") == 0 {
@@ -292,7 +292,7 @@ func (d *MetaDownloader) DownloadToFile(p string) error {
 	log.Println(":size", d.Size)
 	log.Println("check enable", d.Check)
 	_ = os.MkdirAll(p, os.ModePerm)
-	df := path.Join(p, d.Name+common.EXT_DOWNLOADING)
+	df := path.Join(p, d.Name+EXT_DOWNLOADING)
 	pp := path.Join(p, d.Name)
 	if f, er := d.getOutputFile(pp); er != nil {
 		return er
@@ -324,7 +324,7 @@ func (d *MetaDownloader) DownloadToStream(p Processor, file block.File) error {
 // 获取下载的文件
 func (d *MetaDownloader) getOutputFile(path string) (block.File, error) {
 	flag := os.O_CREATE | os.O_RDWR
-	exist := common.FileExist(path)
+	exist := FileExist(path)
 	if exist {
 		log.Println("file exists", path)
 	} else {

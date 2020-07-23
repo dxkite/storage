@@ -1,17 +1,11 @@
-package client
+package storage
 
 import (
-	"dxkite.cn/storage/client/downloader"
-	"dxkite.cn/storage/client/uploader"
-	"dxkite.cn/storage/util"
 	"log"
 )
 
-type Client struct {
-}
-
-func (Client) Upload(path, cloud string, bs int) {
-	u := uploader.NewUploader(int64(bs*1024*1024), cloud)
+func Upload(path, cloud string, bs int) {
+	u := NewUploader(int64(bs*1024*1024), cloud)
 	if er := u.UploadFile(path); er != nil {
 		log.Fatal("upload error:", er)
 	}
@@ -19,7 +13,7 @@ func (Client) Upload(path, cloud string, bs int) {
 }
 
 func Install(path string) {
-	if er := util.Install(path); er != nil {
+	if er := InstallURL(path); er != nil {
 		log.Println("error install", er)
 	} else {
 		log.Println("install success")
@@ -27,15 +21,15 @@ func Install(path string) {
 }
 
 func Uninstall(path string) {
-	if er := util.Uninstall(path); er != nil {
+	if er := UninstallURL(path); er != nil {
 		log.Println("error uninstall", er)
 	} else {
 		log.Println("uninstall success")
 	}
 }
 
-func (Client) Download(meta, path string, check bool, num, retry int) {
-	d := downloader.NewMetaDownloader(check, num)
+func Download(meta, path string, check bool, num, retry int) {
+	d := NewMetaDownloader(check, num)
 
 	if err := d.Load(meta); err != nil {
 		log.Println("load meta error", err)
@@ -52,5 +46,3 @@ func (Client) Download(meta, path string, check bool, num, retry int) {
 	}
 	log.Println("download success")
 }
-
-var Default = Client{}

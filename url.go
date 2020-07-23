@@ -1,15 +1,15 @@
 // +build !windows
 
-package util
+package storage
 
 import "fmt"
 
-func Install(exec string) error {
+func InstallURL(exec string) error {
 	fmt.Sprintf("only support windows")
 	return nil
 }
 
-func Uninstall(path string) {
+func UninstallURL(path string) {
 	fmt.Sprintf("only support windows")
 	return nil
 }

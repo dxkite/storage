@@ -1,9 +1,8 @@
 // +build windows
 
-package util
+package storage
 
 import (
-	"dxkite.cn/storage/common"
 	"fmt"
 	"golang.org/x/sys/windows/registry"
 	"strconv"
@@ -86,16 +85,16 @@ func registerFileAssociate(ext, icon, cmd, name, info string) error {
 	return nil
 }
 
-func Install(exec string) error {
+func InstallURL(exec string) error {
 	// 检测图标
 	icon := strconv.Quote(exec) + `,0`
-	if common.FileExist(exec + ".ico") {
+	if FileExist(exec + ".ico") {
 		icon = strconv.Quote(exec + ".ico")
 	}
-	if er := registerURLProtocol(common.BASE_PROTOCOL, common.APP_NAME, icon, strconv.Quote(exec)+` "%1"`); er != nil {
+	if er := registerURLProtocol(BASE_PROTOCOL, APP_NAME, icon, strconv.Quote(exec)+` "%1"`); er != nil {
 		return er
 	}
-	if er := registerFileAssociate(common.EXT_META, icon, strconv.Quote(exec)+` "%1"`, common.META_NAME, common.META_INFO); er != nil {
+	if er := registerFileAssociate(EXT_META, icon, strconv.Quote(exec)+` "%1"`, META_NAME, META_INFO); er != nil {
 		return er
 	}
 	return nil
@@ -107,7 +106,7 @@ func (ue RegError) Error() string {
 
 func deleteURLProtocol(name string) error {
 	if err := registry.DeleteKey(registry.CLASSES_ROOT, name+`\DefaultIcon`); err != nil && err != registry.ErrNotExist {
-		return RegError{"delete", common.BASE_PROTOCOL + `\DefaultIcon`, err}
+		return RegError{"delete", BASE_PROTOCOL + `\DefaultIcon`, err}
 	}
 
 	if err := registry.DeleteKey(registry.CLASSES_ROOT, name+`\shell\open\command`); err != nil && err != registry.ErrNotExist {
@@ -129,14 +128,14 @@ func deleteURLProtocol(name string) error {
 	return nil
 }
 
-func Uninstall(path string) error {
-	if err := registry.DeleteKey(registry.CLASSES_ROOT, common.EXT_META); err != nil && err != registry.ErrNotExist {
-		return RegError{"delete", common.EXT_META, err}
+func UninstallURL(path string) error {
+	if err := registry.DeleteKey(registry.CLASSES_ROOT, EXT_META); err != nil && err != registry.ErrNotExist {
+		return RegError{"delete", EXT_META, err}
 	}
-	if err := deleteURLProtocol(common.BASE_PROTOCOL); err != nil {
+	if err := deleteURLProtocol(BASE_PROTOCOL); err != nil {
 		return err
 	}
-	if err := deleteURLProtocol(common.META_NAME); err != nil {
+	if err := deleteURLProtocol(META_NAME); err != nil {
 		return err
 	}
 	return nil

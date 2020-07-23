@@ -1,4 +1,4 @@
-package common
+package storage
 
 const APP_NAME = "Storage"
 const BASE_PROTOCOL = "storage"

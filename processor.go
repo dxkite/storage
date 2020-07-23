@@ -1,7 +1,6 @@
-package downloader
+package storage
 
 import (
-	"dxkite.cn/storage/common"
 	"errors"
 	"fmt"
 	"os"
@@ -22,7 +21,7 @@ type LocalProcessor struct {
 }
 
 func (p LocalProcessor) Load() (*ProcessMeta, error) {
-	if !common.FileExist(p.p) {
+	if !FileExist(p.p) {
 		return nil, errors.New("download meta not exists")
 	}
 	dd, err := DecodeToFile(p.p)

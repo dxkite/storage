@@ -1,4 +1,4 @@
-package downloader
+package storage
 
 import (
 	"dxkite.cn/storage/bitset"
