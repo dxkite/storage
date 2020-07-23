@@ -1,17 +1,10 @@
 package meta
 
 import (
-	"bytes"
-	"dxkite.cn/storage/src/common"
-	"encoding/base64"
 	"errors"
-	"fmt"
 	"github.com/zeebo/bencode"
 	"io"
-	"io/ioutil"
 	"math/rand"
-	"net/http"
-	"net/url"
 	"os"
 	"time"
 )
@@ -90,47 +83,6 @@ func EncodeToStream(f io.Writer, info *Info) error {
 	}
 	b := bencode.NewEncoder(NewXORWriter(xor, f))
 	return b.Encode(info)
-}
-
-func DecodeFromFile(path string) (*Info, error) {
-	f, er := os.OpenFile(path, os.O_RDONLY, os.ModePerm)
-	if er != nil {
-		return nil, er
-	}
-	defer func() { _ = f.Close() }()
-	return DecodeFromStream(f)
-}
-
-func DecodeFromMetaProtocol(path string) (*Info, error) {
-	u, er := url.Parse(path)
-	if er != nil {
-		return nil, er
-	}
-	if u.Scheme != common.BASE_PROTOCOL {
-		return nil, errors.New("need protocol " + common.BASE_PROTOCOL)
-	}
-	if u.Host != common.HOST_META {
-		return nil, errors.New("need host meta")
-	}
-	dl := u.Query().Get("dl")
-	if dd, err := base64.StdEncoding.DecodeString(dl); err != nil {
-		return nil, errors.New(fmt.Sprintf("protocol decode dl %v", err))
-	} else {
-		return DecodeFromUrl(string(dd))
-	}
-}
-
-func DecodeFromUrl(url string) (*Info, error) {
-	if res, er := http.Get(url); er != nil {
-		return nil, er
-	} else {
-		defer func() { _ = res.Body.Close() }()
-		if bb, er := ioutil.ReadAll(res.Body); er != nil {
-			return nil, er
-		} else {
-			return DecodeFromStream(bytes.NewReader(bb))
-		}
-	}
 }
 
 func DecodeFromStream(f io.Reader) (*Info, error) {

@@ -2,7 +2,7 @@ package upload
 
 import (
 	"bytes"
-	"dxkite.cn/storage/src/common"
+	"dxkite.cn/storage/common"
 	"encoding/json"
 	"errors"
 	"io/ioutil"

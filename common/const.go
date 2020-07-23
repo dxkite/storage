@@ -1,5 +1,6 @@
 package common
 
+const APP_NAME = "Storage"
 const BASE_PROTOCOL = "storage"
 const HOST_META = "meta"
 

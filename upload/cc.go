@@ -2,7 +2,7 @@ package upload
 
 import (
 	"bytes"
-	"dxkite.cn/storage/src/common"
+	"dxkite.cn/storage/common"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,28 +11,31 @@ import (
 	"net/http"
 )
 
-type NetEasy163Response struct {
-	Status string   `json:"code"`
-	Data   []string `json:"data"`
+type CcItem struct {
+	Url string `json:"url"`
 }
 
-const NETEASY_163 = "163"
-const NETEASY = NETEASY_163
+type CcResponse struct {
+	Error        int      `json:"total_error"`
+	SuccessImage []CcItem `json:"success_image"`
+}
 
-type NetEasy163Uploader struct {
+const CC = "cc"
+
+type CcUploader struct {
 }
 
 func init() {
-	Register(NETEASY, func(config Config) Uploader {
-		return &NetEasy163Uploader{}
+	Register(CC, func(config Config) Uploader {
+		return &CcUploader{}
 	})
 }
 
-func (*NetEasy163Uploader) Upload(object *FileObject) (*Result, error) {
-	url := "http://you.163.com/xhr/file/upload.json"
+func (*CcUploader) Upload(object *FileObject) (*Result, error) {
+	url := "https://upload.cc/image_upload"
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)
-	if fw, e := w.CreateFormFile("file", object.Name); e == nil && fw != nil {
+	if fw, e := w.CreateFormFile("uploaded_file[]", object.Name); e == nil && fw != nil {
 		if _, er := fw.Write(object.Data); er != nil {
 			return nil, er
 		}
@@ -55,13 +58,15 @@ func (*NetEasy163Uploader) Upload(object *FileObject) (*Result, error) {
 		return nil, errors.New(fmt.Sprintf("read body error: %v", rer))
 	}
 
-	resp := new(NetEasy163Response)
+	//fmt.Println(string(body))
+
+	resp := new(CcResponse)
 	if er := json.Unmarshal(body, resp); er == nil {
-		if resp.Status != "200" {
-			return nil, errors.New("NetEasy163 upload error: " + string(body))
+		if resp.Error != 0 {
+			return nil, errors.New("cc upload error: " + string(body))
 		}
 		return &Result{
-			Url: resp.Data[0],
+			Url: "https://upload.cc/" + resp.SuccessImage[0].Url,
 			Raw: body,
 		}, nil
 	} else {

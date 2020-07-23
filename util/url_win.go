@@ -3,11 +3,17 @@
 package util
 
 import (
-	"dxkite.cn/storage/src/common"
+	"dxkite.cn/storage/common"
 	"fmt"
 	"golang.org/x/sys/windows/registry"
 	"strconv"
 )
+
+type RegError struct {
+	opt string
+	reg string
+	err error
+}
 
 // 注册URL打开
 // 参考：https://docs.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/platform-apis/aa767914(v=vs.85)
@@ -86,7 +92,7 @@ func Install(exec string) error {
 	if common.FileExist(exec + ".ico") {
 		icon = strconv.Quote(exec + ".ico")
 	}
-	if er := registerURLProtocol(common.BASE_PROTOCOL, "Go Storage", icon, strconv.Quote(exec)+` "%1"`); er != nil {
+	if er := registerURLProtocol(common.BASE_PROTOCOL, common.APP_NAME, icon, strconv.Quote(exec)+` "%1"`); er != nil {
 		return er
 	}
 	if er := registerFileAssociate(common.EXT_META, icon, strconv.Quote(exec)+` "%1"`, common.META_NAME, common.META_INFO); er != nil {
@@ -95,34 +101,29 @@ func Install(exec string) error {
 	return nil
 }
 
-type MsgError struct {
-	msg string
-	err error
-}
-
-func (ue MsgError) Error() string {
-	return fmt.Sprintf("%s %v", ue.msg, ue.err)
+func (ue RegError) Error() string {
+	return fmt.Sprintf("%s `%s` error: %v", ue.opt, ue.reg, ue.err)
 }
 
 func deleteURLProtocol(name string) error {
 	if err := registry.DeleteKey(registry.CLASSES_ROOT, name+`\DefaultIcon`); err != nil && err != registry.ErrNotExist {
-		return MsgError{"delete reg:" + common.BASE_PROTOCOL + `\DefaultIcon`, err}
+		return RegError{"delete", common.BASE_PROTOCOL + `\DefaultIcon`, err}
 	}
 
 	if err := registry.DeleteKey(registry.CLASSES_ROOT, name+`\shell\open\command`); err != nil && err != registry.ErrNotExist {
-		return MsgError{"delete reg:" + name + `\shell\open\command`, err}
+		return RegError{"delete", name + `\shell\open\command`, err}
 	}
 
 	if err := registry.DeleteKey(registry.CLASSES_ROOT, name+`\shell\open`); err != nil && err != registry.ErrNotExist {
-		return MsgError{"delete reg:" + name + `\shell\open`, err}
+		return RegError{"delete", name + `\shell\open`, err}
 	}
 
 	if err := registry.DeleteKey(registry.CLASSES_ROOT, name+`\shell`); err != nil && err != registry.ErrNotExist {
-		return MsgError{"delete reg:" + name + `\shell`, err}
+		return RegError{"delete", name + `\shell`, err}
 	}
 
 	if err := registry.DeleteKey(registry.CLASSES_ROOT, name); err != nil && err != registry.ErrNotExist {
-		return MsgError{"delete reg:" + name, err}
+		return RegError{"delete", name, err}
 	}
 
 	return nil
@@ -130,7 +131,7 @@ func deleteURLProtocol(name string) error {
 
 func Uninstall(path string) error {
 	if err := registry.DeleteKey(registry.CLASSES_ROOT, common.EXT_META); err != nil && err != registry.ErrNotExist {
-		return MsgError{"delete reg:" + common.EXT_META, err}
+		return RegError{"delete", common.EXT_META, err}
 	}
 	if err := deleteURLProtocol(common.BASE_PROTOCOL); err != nil {
 		return err

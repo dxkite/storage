@@ -1,11 +1,11 @@
-package client
+package uploader
 
 import (
-	"dxkite.cn/storage/src/bitset"
-	"dxkite.cn/storage/src/common"
-	"dxkite.cn/storage/src/image"
-	"dxkite.cn/storage/src/meta"
-	"dxkite.cn/storage/src/upload"
+	"dxkite.cn/storage/bitset"
+	"dxkite.cn/storage/common"
+	"dxkite.cn/storage/image"
+	"dxkite.cn/storage/meta"
+	"dxkite.cn/storage/upload"
 	"encoding/gob"
 	"encoding/hex"
 	"fmt"
@@ -40,8 +40,8 @@ func (u *Uploader) UploadFile(name string) error {
 	if oer != nil {
 		return oer
 	}
-	var info = SteamHash(file)
-	var size = SteamSize(file)
+	var info = common.SteamHash(file)
+	var size = common.SteamSize(file)
 	base := filepath.Base(file.Name())
 	log.Printf("upload to %s\n", u.Usn)
 	log.Printf("upload meta info %x %s %d\n", info, base, size)
@@ -72,7 +72,7 @@ func (u *Uploader) UploadFile(name string) error {
 				continue
 			}
 
-			hh := ByteHash(buf[:nr])
+			hh := common.ByteHash(buf[:nr])
 			var encoded []byte
 			if b, er := image.EncodeByte(buf[:nr]); er != nil {
 				err = er

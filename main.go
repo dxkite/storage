@@ -1,9 +1,9 @@
 package main
 
 import (
-	"dxkite.cn/storage/src/client"
-	"dxkite.cn/storage/src/common"
-	"dxkite.cn/storage/src/upload"
+	"dxkite.cn/storage/client"
+	"dxkite.cn/storage/common"
+	"dxkite.cn/storage/upload"
 	"flag"
 	"log"
 	"os"

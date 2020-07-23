@@ -1,8 +1,8 @@
 package main
 
 import (
-	"dxkite.cn/storage/src/client"
-	"dxkite.cn/storage/src/common"
+	"dxkite.cn/storage/client"
+	"dxkite.cn/storage/common"
 	"flag"
 	"log"
 	"os"
