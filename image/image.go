@@ -32,27 +32,27 @@ type Writer struct {
 }
 
 func (p *imageReadWriter) Write(b []byte) (n int, err error) {
-	n = p.offset
 	r := false
-	h := HeaderLength
-	// 写入数据
-	for _, d := range b {
-		if p.offset+h < len(p.Image.Pix) {
-			p.Image.Pix[h+p.offset] = d
-		} else {
-			p.Image.Pix = append(p.Image.Pix, d)
-			r = true
-		}
-		p.offset++
+	of := HeaderLength + p.offset
+	s := len(p.Image.Pix) - of
+	lb := len(b)
+	if lb > s {
+		r = true
+		// 复制有的内容
+		copy(p.Image.Pix[of:], b[:s])
+		// 处理剩余空间
+		p.Image.Pix = append(p.Image.Pix, b[s:]...)
+	} else {
+		copy(p.Image.Pix[of:], b[:])
 	}
+	p.offset += lb
+	p.Length += uint32(lb)
 	// 重置大小
 	if r {
 		p.resize()
 	}
-	d := p.offset - n
-	p.Length += uint32(d)
 	p.writeHeader()
-	return d, nil
+	return lb, nil
 }
 
 func (p *imageReadWriter) writeHeader() {
@@ -73,21 +73,20 @@ func (p *imageReadWriter) Read(b []byte) (n int, err error) {
 	if len(b) == 0 {
 		return 0, nil
 	}
-	n = p.offset
-	h := HeaderLength
 	p.Version, p.Length = p.readHeader()
-	for i, _ := range b {
-		if uint32(p.offset) < p.Length {
-			b[i] = p.Image.Pix[h+p.offset]
-			p.offset++
-		} else {
-			break
-		}
-	}
-	if p.offset-n == 0 {
+	of := HeaderLength + p.offset
+	s := int(p.Length) - p.offset
+	if s == 0 {
 		return 0, io.EOF
 	}
-	return p.offset - n, nil
+	lb := len(b)
+	if s > lb {
+		n = copy(b[:], p.Image.Pix[of:of+lb])
+	} else {
+		n = copy(b[:s], p.Image.Pix[of:])
+	}
+	p.offset += n
+	return n, nil
 }
 
 func NewEncoder(size int) *imageReadWriter {
@@ -106,7 +105,14 @@ func (p *imageReadWriter) resize() *image.NRGBA {
 	w, h := getSize(HeaderLength + int(p.Length))
 	p.Image.Stride = 4 * w
 	p.Image.Rect = image.Rect(0, 0, w, h)
-	p.Image.Pix = p.Image.Pix[0 : w*h*4]
+	l := w * h * 4
+	pl := len(p.Image.Pix)
+	if pl > l {
+		p.Image.Pix = p.Image.Pix[0:l]
+	} else {
+		e := make([]byte, l-pl)
+		p.Image.Pix = append(p.Image.Pix, e...)
+	}
 	return p.Image
 }
 
@@ -129,14 +135,19 @@ func Decode(r io.Reader, w io.Writer) error {
 			return err
 		}
 	default:
-		return errors.New(fmt.Sprintf("unknown color mode： image.RGBA"))
+		return errors.New(fmt.Sprintf("unknown color mode：image.RGBA"))
 	}
 	return nil
 }
 
 // 编码
 func Encode(w io.Writer, r io.Reader) error {
-	p := NewEncoder(1024)
+	return EncodeSize(w, r, 1024)
+}
+
+// 直接编码
+func EncodeSize(w io.Writer, r io.Reader, size int) error {
+	p := NewEncoder(size)
 	if _, err := io.Copy(p, r); err != nil {
 		return err
 	}
@@ -146,9 +157,14 @@ func Encode(w io.Writer, r io.Reader) error {
 
 // 编码
 func EncodeByte(input []byte) ([]byte, error) {
+	return EncodeByteSize(input, 1024)
+}
+
+// 编码
+func EncodeByteSize(input []byte, size int) ([]byte, error) {
 	i := bytes.NewBuffer(input)
 	o := &bytes.Buffer{}
-	err := Encode(o, i)
+	err := EncodeSize(o, i, size)
 	if err != nil {
 		return nil, err
 	}
