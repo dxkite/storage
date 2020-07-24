@@ -22,13 +22,14 @@ import (
 )
 
 type Downloader struct {
-	ProcessMeta
+	*DownloadInfo
+	meta.Info
 	File     *block.BlockFile
 	BlockTry int
 	Error    error
 	mutex    sync.Mutex
 	// 进度
-	Processor Processor
+	Processor DownloadProcessor
 }
 
 func (d *Downloader) download(max int) error {
@@ -53,15 +54,16 @@ func (d *Downloader) download(max int) error {
 }
 
 // 初始化
-func (d *Downloader) init(p Processor, stream block.File) error {
+func (d *Downloader) init(p DownloadProcessor, stream block.File) error {
 	d.Processor = p
 	dd, _ := d.Processor.Load()
 	if dd == nil {
+		d.DownloadInfo = new(DownloadInfo)
 		d.Index = bitset.New(int64(len(d.Block)))
 		d.DownloadTotal = len(d.Block)
 		d.Downloaded = 0
 	} else {
-		d.ProcessMeta = *dd
+		d.DownloadInfo = dd
 	}
 
 	d.File = &block.BlockFile{
@@ -82,7 +84,7 @@ func (d *Downloader) init(p Processor, stream block.File) error {
 
 // 检测快是否可用
 func (d *Downloader) checkBlock(bb meta.DataBlock) bool {
-	start, end := d.calculateRange(bb.Index)
+	start, end := IndexToRange(d.Size, d.BlockSize, bb.Index)
 	rb := block.NewBlock(start, end, nil)
 	if buf, err := d.File.ReadBlock(rb); err != nil {
 		return false
@@ -99,7 +101,7 @@ type DownloadRetryable struct {
 }
 
 // 下载数据
-func (r *DownloadRetryable) downloadBlock(dataBlock *meta.DataBlock) (block.Block, error) {
+func (r *DownloadRetryable) downloadBlock(dataBlock *meta.DataBlock, start, end int64) (block.Block, error) {
 	// 下载成功
 	var retry = false
 	var err error
@@ -123,24 +125,12 @@ func (r *DownloadRetryable) downloadBlock(dataBlock *meta.DataBlock) (block.Bloc
 		// 可重试
 		if r.try > 0 {
 			log.Printf("block %d download error: %v, retry", dataBlock.Index, err)
-			return r.downloadBlock(dataBlock)
+			return r.downloadBlock(dataBlock, start, end)
 		}
 		return nil, err
 	}
-
 	log.Printf("block %d dwonloaded", dataBlock.Index)
-	start, end := r.d.calculateRange(dataBlock.Index)
 	return block.NewBlock(start, end, buf), err
-}
-
-// 计算块位置
-func (d *Downloader) calculateRange(index int64) (begin, end int64) {
-	begin = index * d.BlockSize
-	end = begin + d.BlockSize
-	if end > d.Size {
-		end = d.Size
-	}
-	return begin, end
 }
 
 // 检测块是否下载成功
@@ -153,14 +143,20 @@ func (d *Downloader) IsDownloaded(dataBlock *meta.DataBlock) bool {
 
 // 下载块数据
 func (d *Downloader) downloadBlock(dataBlock *meta.DataBlock) error {
+	start, end := IndexToRange(d.Size, d.BlockSize, dataBlock.Index)
+
 	if d.IsDownloaded(dataBlock) {
 		log.Printf("block %d is exist", dataBlock.Index)
+		_ = d.Processor.Process(PROCESS_EXIST, dataBlock.Index, start, end, nil)
 		return nil
 	}
+	
+	_ = d.Processor.Process(PROCESS_START, dataBlock.Index, start, end, nil)
 	log.Printf("[%.2f%%] block %d downloading", float64(d.Downloaded)*100/float64(d.DownloadTotal), dataBlock.Index)
 	dr := DownloadRetryable{d.BlockTry, d}
-	bb, er := dr.downloadBlock(dataBlock)
+	bb, er := dr.downloadBlock(dataBlock, start, end)
 	if er != nil {
+		_ = d.Processor.Process(PROCESS_ERROR, dataBlock.Index, start, end, er)
 		return er
 	}
 	if bb != nil {
@@ -171,7 +167,8 @@ func (d *Downloader) downloadBlock(dataBlock *meta.DataBlock) error {
 		d.Downloaded++
 		d.Index.Set(dataBlock.Index)
 		log.Printf("[%.2f%%] block %d downloaded", float64(d.Downloaded)*100/float64(d.DownloadTotal), dataBlock.Index)
-		if wer := d.Processor.Save(&d.ProcessMeta, dataBlock.Index, bb.Start(), bb.End()); wer != nil {
+		_ = d.Processor.Process(PROCESS_DONE, dataBlock.Index, start, end, nil)
+		if wer := d.Processor.Save(d.DownloadInfo); wer != nil {
 			return wer
 		}
 	}
@@ -291,18 +288,19 @@ func (d *MetaDownloader) DownloadToFile(p string) error {
 	log.Println(":sha1", hex.EncodeToString(d.Hash))
 	log.Println(":size", d.Size)
 	log.Println("check enable", d.Check)
+	log.Println("download to", p)
 	_ = os.MkdirAll(p, os.ModePerm)
 	df := path.Join(p, d.Name+EXT_DOWNLOADING)
 	pp := path.Join(p, d.Name)
 	if f, er := d.getOutputFile(pp); er != nil {
 		return er
 	} else {
-		return d.DownloadToStream(LocalProcessor{df}, f)
+		return d.DownloadToStream(NewDownloadProcessor(df), f)
 	}
 }
 
 // 下载到流
-func (d *MetaDownloader) DownloadToStream(p Processor, file block.File) error {
+func (d *MetaDownloader) DownloadToStream(p DownloadProcessor, file block.File) error {
 	if err := d.init(p, file); err != nil {
 		return err
 	}
@@ -317,7 +315,7 @@ func (d *MetaDownloader) DownloadToStream(p Processor, file block.File) error {
 		err := errors.New("hash check error")
 		return err
 	}
-	_ = d.Processor.Clear()
+	_ = d.Processor.Finish()
 	return nil
 }
 

@@ -1,11 +1,9 @@
 package storage
 
 import (
-	"dxkite.cn/storage/bitset"
 	"dxkite.cn/storage/image"
 	"dxkite.cn/storage/meta"
 	"dxkite.cn/storage/upload"
-	"encoding/gob"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -16,15 +14,8 @@ import (
 )
 
 type Uploader struct {
-	Size       int64
-	Usn        string
-	bn         string
-	UploadInfo *UploadInfo
-}
-
-type UploadInfo struct {
-	Index bitset.BitSet
-	Meta  *meta.Info
+	Size int64
+	Usn  string
 }
 
 func NewUploader(bs int64, usn string) *Uploader {
@@ -34,21 +25,25 @@ func NewUploader(bs int64, usn string) *Uploader {
 	}
 }
 
-func (u *Uploader) UploadFile(name string) error {
-	file, oer := os.OpenFile(name, os.O_RDONLY, os.ModePerm)
+func (u *Uploader) UploadFile(p string) error {
+	file, oer := os.OpenFile(p, os.O_RDONLY, os.ModePerm)
 	if oer != nil {
 		return oer
 	}
-	var info = SteamHash(file)
-	var size = SteamSize(file)
-	base := filepath.Base(file.Name())
+	hash := SteamHash(file)
+	size := SteamSize(file)
+	name := file.Name()
+	return u.UploadSteam(name, hash, size, file)
+}
+
+func (u *Uploader) UploadSteam(name string, hash []byte, size int64, r io.Reader) error {
+	base := filepath.Base(name)
 	log.Printf("upload to %s\n", u.Usn)
-	log.Printf("upload meta info %x %s %d\n", info, base, size)
-	u.bn = name + EXT_UPLOADING
+	log.Printf("upload meta info %x %s %d\n", hash, base, size)
 
 	bc := int64(math.Ceil(float64(size) / float64(u.Size)))
-	ui := u.GetUploadInfo(base, size, bc, info)
-	u.UploadInfo = ui
+	p := NewFileUploadProcessor(name+EXT_UPLOADING, NewUploadInfo(base, size, bc, u.Size, hash))
+	ui, _ := p.Load()
 
 	var index = int64(0)
 	var err error
@@ -62,15 +57,17 @@ func (u *Uploader) UploadFile(name string) error {
 	}
 
 	for {
-		nr, er := file.Read(buf)
+		nr, er := r.Read(buf)
 		if nr > 0 {
+			start, end := IndexToRange(ui.Meta.Size, ui.Meta.BlockSize, index)
 			log.Printf("uploading %d/%d block\n", index+1, bc)
 			if ui.Index.Get(index) {
 				log.Printf("skip uploaded %d block\n", index+1)
+				_ = p.Process(PROCESS_EXIST, index, start, end, nil)
 				index++
 				continue
 			}
-
+			_ = p.Process(PROCESS_START, index, start, end, nil)
 			hh := ByteHash(buf[:nr])
 			var encoded []byte
 			if b, er := image.EncodeByte(buf[:nr]); er != nil {
@@ -79,26 +76,27 @@ func (u *Uploader) UploadFile(name string) error {
 			} else {
 				encoded = b
 			}
-
 			if r, er := uploader.Upload(&upload.FileObject{
-				Name: fmt.Sprintf("%s-%d.png", hex.EncodeToString(info), index),
+				Name: fmt.Sprintf("%s-%d.png", hex.EncodeToString(hash), index),
 				Data: encoded,
 			}); er != nil {
 				err = er
+				_ = p.Process(PROCESS_ERROR, index, start, end, err)
 				break
 			} else {
 				ui.Meta.Status = meta.Uploading
-				ui.Meta.Block = append(ui.Meta.Block, meta.DataBlock{
+				b := meta.DataBlock{
 					Hash:  hh,
 					Index: index,
 					Data:  []byte(r.Url),
-				})
+				}
+				ui.Meta.Block = append(ui.Meta.Block, b)
 				ui.Index.Set(index)
 				log.Printf("uploaded %d/%d block\n", index+1, bc)
-				_ = EncodeUploadInfo(u.bn, ui)
+				_ = p.Process(PROCESS_DONE, index, start, end, nil)
+				_ = p.Save(ui)
 			}
 		}
-
 		if er != nil {
 			if er != io.EOF {
 				err = er
@@ -108,62 +106,17 @@ func (u *Uploader) UploadFile(name string) error {
 		index++
 	}
 	if err != nil {
-		_ = EncodeUploadInfo(u.bn, ui)
+		_ = p.Save(ui)
+		_ = p.Finish()
 		return err
 	}
 	ui.Meta.Status = meta.Finish
 	if er := meta.EncodeToFile(name+EXT_META, ui.Meta); er != nil {
-		_ = EncodeUploadInfo(u.bn, ui)
+		_ = p.Save(ui)
+		_ = p.Finish()
 		return er
 	}
 	log.Println("finished")
-	_ = os.Remove(u.bn)
+	_ = p.Finish()
 	return nil
-}
-
-func (u *Uploader) GetUploadInfo(name string, size, block int64, info []byte) *UploadInfo {
-	if FileExist(u.bn) {
-		if ui, er := DecodeUploadInfoFile(u.bn); er == nil {
-			return ui
-		}
-	}
-	m := &meta.Info{
-		Hash:      info,
-		BlockSize: u.Size,
-		Size:      size,
-		Name:      name,
-		Status:    meta.Create,
-		Type:      int32(meta.Type_URI),
-		Encode:    int32(meta.Encode_Image),
-		Block:     []meta.DataBlock{},
-	}
-	return &UploadInfo{
-		Index: bitset.New(block),
-		Meta:  m,
-	}
-}
-
-func EncodeUploadInfo(path string, info *UploadInfo) error {
-	f, er := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.ModePerm)
-	if er != nil {
-		return er
-	}
-	defer func() { _ = f.Close() }()
-	b := gob.NewEncoder(f)
-	return b.Encode(info)
-}
-
-func DecodeUploadInfoFile(path string) (*UploadInfo, error) {
-	f, er := os.OpenFile(path, os.O_RDONLY, os.ModePerm)
-	if er != nil {
-		return nil, er
-	}
-	defer func() { _ = f.Close() }()
-	b := gob.NewDecoder(f)
-	info := new(UploadInfo)
-	der := b.Decode(&info)
-	if der != nil {
-		return nil, der
-	}
-	return info, nil
 }
