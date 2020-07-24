@@ -33,10 +33,10 @@ func (u *Uploader) UploadFile(p string) error {
 	hash := SteamHash(file)
 	size := SteamSize(file)
 	name := file.Name()
-	return u.UploadSteam(name, hash, size, file)
+	return u.UploadStream(name, hash, size, file)
 }
 
-func (u *Uploader) UploadSteam(name string, hash []byte, size int64, r io.Reader) error {
+func (u *Uploader) UploadStream(name string, hash []byte, size int64, r io.Reader) error {
 	base := filepath.Base(name)
 	log.Printf("upload to %s\n", u.Usn)
 	log.Printf("upload meta info %x %s %d\n", hash, base, size)

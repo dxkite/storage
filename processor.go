@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 )
 
 type ProcessStatus int
@@ -30,7 +31,7 @@ func (s ProcessStatus) String() string {
 	case PROCESS_EXIST:
 		return "PROCESS_EXIST"
 	}
-	return ""
+	return "ProcessStatus:<" + strconv.Itoa(int(s)) + ">"
 }
 
 type DownloadInfo struct {
