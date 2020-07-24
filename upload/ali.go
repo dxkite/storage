@@ -62,7 +62,8 @@ func (*AliUploader) Upload(object *FileObject) (*Result, error) {
 		return nil, er
 	}
 
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
+
 	body, rer := ioutil.ReadAll(res.Body)
 	if rer != nil {
 		return nil, rer

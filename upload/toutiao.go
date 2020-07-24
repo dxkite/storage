@@ -47,7 +47,8 @@ func (*TouTiaoUploader) Upload(object *FileObject) (*Result, error) {
 		return nil, errors.New(fmt.Sprintf("request error: %v", er))
 	}
 
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
+
 	body, rer := ioutil.ReadAll(res.Body)
 	if rer != nil {
 		return nil, errors.New(fmt.Sprintf("read body error: %v", rer))
