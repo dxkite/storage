@@ -17,7 +17,7 @@ func init() {
 
 func main() {
 	var save = flag.String("path", "", "download save path")
-	var usn = flag.String("usn", upload.TOUTIAO, "upload usn")
+	var usn = flag.String("usn", upload.YUAN_FANG, "upload usn")
 
 	var install = flag.Bool("install", false, "install")
 	var uninstall = flag.Bool("uninstall", false, "uninstall")
