@@ -22,6 +22,8 @@ type Result struct {
 	Raw []byte
 }
 
+var Default = OppoFeedback
+
 var list = make(map[string]UploaderCreator)
 
 type Uploader interface {
