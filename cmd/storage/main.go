@@ -2,7 +2,7 @@ package main
 
 import (
 	"dxkite.cn/storage"
-	"dxkite.cn/storage-uploader"
+	uploader "dxkite.cn/storage-uploader"
 	"flag"
 	"log"
 	"os"
