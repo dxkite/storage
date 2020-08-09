@@ -22,8 +22,6 @@ type Result struct {
 	Raw []byte
 }
 
-var Default = OppoFeedback
-
 var list = make(map[string]UploaderCreator)
 
 type Uploader interface {
@@ -45,7 +43,7 @@ func Upload(usn string, object *FileObject) (*Result, error) {
 }
 
 func Create(usn string) (Uploader, error) {
-	if name, cfg, err := parse(usn); err == nil {
+	if name, cfg, err := Parse(usn); err == nil {
 		return CreateConfig(name, cfg)
 	} else {
 		return nil, err
@@ -75,7 +73,7 @@ func WithConfig(name string, config Config) Uploader {
 	}
 }
 
-func parse(usn string) (name string, cfg Config, err error) {
+func Parse(usn string) (name string, cfg Config, err error) {
 	n, q := split(usn, ':')
 	name = n
 	// name:uid=xxx

@@ -77,7 +77,7 @@ func (u *Uploader) UploadStream(name string, hash []byte, size int64, r io.Reade
 				encoded = b
 			}
 			if r, er := uploader.Upload(&upload.FileObject{
-				Name: fmt.Sprintf("%s-%d.png", hex.EncodeToString(hash), index),
+				Name: fmt.Sprintf("%s-%d.jpg", hex.EncodeToString(hash), index),
 				Data: encoded,
 			}); er != nil {
 				err = er
