@@ -13,7 +13,7 @@ type FileObject struct {
 	Data []byte
 }
 
-type Config map[string]string
+type Config *url.URL
 
 type Result struct {
 	// 上传URL
@@ -74,17 +74,19 @@ func WithConfig(name string, config Config) Uploader {
 }
 
 func Parse(usn string) (name string, cfg Config, err error) {
-	n, q := split(usn, ':')
-	name = n
-	// name:uid=xxx
-	if u, per := url.ParseQuery(q); per != nil {
+	var u string
+	if strings.Index(usn, "://") > 0 {
+		u = usn
+	} else {
+		// name:uid=xxx
+		n, q := split(usn, ':')
+		name = n
+		u = name + "://uploader?" + q
+	}
+	if uu, per := url.Parse(u); per != nil {
 		return "", nil, errors.New("parser upload server name error:" + per.Error())
 	} else {
-		cfg = map[string]string{}
-		for name, value := range u {
-			cfg[name] = value[0]
-		}
-		return name, cfg, nil
+		return uu.Scheme, uu, nil
 	}
 }
 
