@@ -57,9 +57,13 @@ func (u *Uploader) UploadStream(name string, hash []byte, size int64, r io.Reade
 	}
 
 	for {
-		nr, er := r.Read(buf)
+		start, end := IndexToRange(ui.Meta.Size, ui.Meta.BlockSize, index)
+		if start > size {
+			break
+		}
+		n := int(end - start)
+		nr, er := io.ReadAtLeast(r, buf, n)
 		if nr > 0 {
-			start, end := IndexToRange(ui.Meta.Size, ui.Meta.BlockSize, index)
 			log.Printf("uploading %d/%d block\n", index+1, bc)
 			if ui.Index.Get(index) {
 				log.Printf("skip uploaded %d block\n", index+1)
