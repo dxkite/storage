@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"strconv"
 )
@@ -125,9 +126,8 @@ type UploadInfo struct {
 	Meta  *meta.Info
 }
 
-func NewUploadInfo(name string, size, block, blockSize int64, info []byte) *UploadInfo {
+func NewUploadInfo(name string, size, blockSize int64) *UploadInfo {
 	m := &meta.Info{
-		Hash:      info,
 		BlockSize: blockSize,
 		Size:      size,
 		Name:      name,
@@ -136,6 +136,7 @@ func NewUploadInfo(name string, size, block, blockSize int64, info []byte) *Uplo
 		Encode:    int32(meta.Encode_Image),
 		Block:     []meta.DataBlock{},
 	}
+	block := int64(math.Ceil(float64(size) / float64(blockSize)))
 	return &UploadInfo{
 		Index: bitset.New(block),
 		Meta:  m,
@@ -167,13 +168,18 @@ func (info *UploadInfo) DecodeFromFile(path string) error {
 }
 
 // 上传进度
+type UploadNotify interface {
+	// 通知上传进度
+	Process(status ProcessStatus, index, start, end int64, err error) error
+	// 上传退出
+	Exit(err error) error
+}
+
 type UploadProcessor interface {
 	// 加载上传进度
 	Load() (*UploadInfo, error)
 	// 保存上传进度
 	Save(meta *UploadInfo) error
-	// 通知上传进度
-	Process(status ProcessStatus, index, start, end int64, err error) error
 	// 上传成功
 	Finish() error
 }
@@ -182,6 +188,10 @@ type UploadProcessor interface {
 type FileUploadProcessor struct {
 	p    string
 	info *UploadInfo
+}
+
+// 文件下载进度保存
+type ConsoleNotify struct {
 }
 
 func NewFileUploadProcessor(p string, info *UploadInfo) *FileUploadProcessor {
@@ -209,12 +219,24 @@ func (p *FileUploadProcessor) Save(info *UploadInfo) error {
 	}
 	return nil
 }
+func (p *FileUploadProcessor) Finish() error {
+	return os.Remove(p.p)
+}
 
-func (p *FileUploadProcessor) Process(status ProcessStatus, index, start, end int64, err error) error {
-	log.Println("upload", status, index, start, end, err)
+func (p *ConsoleNotify) Process(status ProcessStatus, index, start, end int64, err error) error {
+	if err == nil {
+		log.Printf("upload [%d] [%d-%d] %s\n", index, start, end, status)
+	} else {
+		log.Printf("upload [%d] %s error: %v\n", index, status, err)
+	}
 	return nil
 }
 
-func (p *FileUploadProcessor) Finish() error {
-	return os.Remove(p.p)
+func (p *ConsoleNotify) Exit(err error) error {
+	if err != nil {
+		log.Println("upload exit", err)
+	} else {
+		log.Println("upload finish")
+	}
+	return nil
 }

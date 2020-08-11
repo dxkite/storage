@@ -1,21 +1,22 @@
 package storage
 
 import (
+	"crypto/sha1"
 	"dxkite.cn/storage/image"
 	"dxkite.cn/storage/meta"
 	"dxkite.cn/storage/upload"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"log"
-	"math"
 	"os"
 	"path/filepath"
 )
 
 type Uploader struct {
-	Size int64
-	Usn  string
+	Size      int64
+	Usn       string
+	Notify    UploadNotify
+	Processor UploadProcessor
 }
 
 func NewUploader(bs int64, usn string) *Uploader {
@@ -30,20 +31,27 @@ func (u *Uploader) UploadFile(p string) error {
 	if oer != nil {
 		return oer
 	}
-	hash := SteamHash(file)
 	size := SteamSize(file)
 	name := file.Name()
-	return u.UploadStream(name, hash, size, file)
+	base := filepath.Base(name)
+	u.Notify = &ConsoleNotify{}
+	u.Processor = NewFileUploadProcessor(name+EXT_UPLOADING, NewUploadInfo(base, size, u.Size))
+	if mt, err := u.UploadStream(file); err != nil {
+		return err
+	} else {
+		if er := meta.EncodeToFile(name+EXT_META, mt); er != nil {
+			return er
+		}
+	}
+	return nil
 }
 
-func (u *Uploader) UploadStream(name string, hash []byte, size int64, r io.Reader) error {
-	base := filepath.Base(name)
+func (u *Uploader) UploadStream(r io.Reader) (*meta.Info, error) {
 	log.Printf("upload to %s\n", u.Usn)
-	log.Printf("upload meta info %x %s %d\n", hash, base, size)
+	p := u.Notify
+	s := u.Processor
 
-	bc := int64(math.Ceil(float64(size) / float64(u.Size)))
-	p := NewFileUploadProcessor(name+EXT_UPLOADING, NewUploadInfo(base, size, bc, u.Size, hash))
-	ui, _ := p.Load()
+	ui, _ := s.Load()
 
 	var index = int64(0)
 	var err error
@@ -51,22 +59,22 @@ func (u *Uploader) UploadStream(name string, hash []byte, size int64, r io.Reade
 	var uploader upload.Uploader
 
 	if u, er := upload.Create(u.Usn); er != nil {
-		return er
+		return nil, er
 	} else {
 		uploader = u
 	}
 
+	sh := sha1.New()
 	for {
 		start, end := IndexToRange(ui.Meta.Size, ui.Meta.BlockSize, index)
-		if start > size {
+		if start > ui.Meta.Size {
 			break
 		}
 		n := int(end - start)
 		nr, er := io.ReadAtLeast(r, buf, n)
 		if nr > 0 {
-			log.Printf("uploading %d/%d block\n", index+1, bc)
+			sh.Write(buf[:nr])
 			if ui.Index.Get(index) {
-				log.Printf("skip uploaded %d block\n", index+1)
 				_ = p.Process(PROCESS_EXIST, index, start, end, nil)
 				index++
 				continue
@@ -81,7 +89,7 @@ func (u *Uploader) UploadStream(name string, hash []byte, size int64, r io.Reade
 				encoded = b
 			}
 			if r, er := uploader.Upload(&upload.FileObject{
-				Name: fmt.Sprintf("%s-%d.jpg", hex.EncodeToString(hash), index),
+				Name: fmt.Sprintf("%s-%d.jpg", ui.Meta.Name, index),
 				Data: encoded,
 			}); er != nil {
 				err = er
@@ -96,9 +104,8 @@ func (u *Uploader) UploadStream(name string, hash []byte, size int64, r io.Reade
 				}
 				ui.Meta.Block = append(ui.Meta.Block, b)
 				ui.Index.Set(index)
-				log.Printf("uploaded %d/%d block\n", index+1, bc)
 				_ = p.Process(PROCESS_DONE, index, start, end, nil)
-				_ = p.Save(ui)
+				_ = s.Save(ui)
 			}
 		}
 		if er != nil {
@@ -110,17 +117,14 @@ func (u *Uploader) UploadStream(name string, hash []byte, size int64, r io.Reade
 		index++
 	}
 	if err != nil {
-		_ = p.Save(ui)
-		_ = p.Finish()
-		return err
+		_ = s.Save(ui)
+		_ = p.Exit(err)
+		return ui.Meta, err
 	}
 	ui.Meta.Status = meta.Finish
-	if er := meta.EncodeToFile(name+EXT_META, ui.Meta); er != nil {
-		_ = p.Save(ui)
-		_ = p.Finish()
-		return er
-	}
-	log.Println("finished")
-	_ = p.Finish()
-	return nil
+	ui.Meta.Hash = sh.Sum(nil)
+	_ = s.Save(ui)
+	_ = s.Finish()
+	_ = p.Exit(nil)
+	return ui.Meta, nil
 }

@@ -2,6 +2,7 @@ package storage
 
 import (
 	"bytes"
+	"dxkite.cn/storage/meta"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -9,14 +10,25 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"path"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"time"
 )
 
 const (
 	UPLOAD_SUCCESS = iota
 	UPLOAD_ERROR_AUTH
-	UPLOAD_ERROR_SIZE
 	UPLOAD_ERROR_HASH
 	UPLOAD_ERROR_PUSH
+	UPLOAD_ERROR_META
+	UPLOAD_ERROR_STOR
+)
+
+const (
+	PERMIT_UPLOAD = "upload"
 )
 
 // 上传
@@ -26,12 +38,20 @@ type UploadHandler struct {
 	AuthRemote string
 	// 验证用请求头
 	// Token数据从请求头中获取
-	AuthHeader string
+	AuthField string
 	// 上传服务器
 	Usn string
 	// 上传块大小
 	BlockSize int
+	// 上传临时目录
+	Temp string
+	// 上传保存目录
+	Root string
 }
+
+var (
+	errPermit = errors.New("permit error")
+)
 
 // 请求验证
 type AuthRequest struct {
@@ -39,8 +59,14 @@ type AuthRequest struct {
 	RemoteIp string `json:"remote_ip"`
 }
 
+type UserInfo struct {
+	Name   string   `json:"name"`
+	Permit []string `json:"permit"`
+}
+
 // 验证响应
 type AuthResponse struct {
+	*UserInfo
 	// 0 验证成功
 	Code    int    `json:"code"`
 	Message string `json:"message"`
@@ -54,26 +80,118 @@ type UploadResponse struct {
 }
 
 func (u *UploadHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
-	if err := u.auth(req); err != nil {
-		u.respError(resp, UPLOAD_ERROR_AUTH, err)
-		return
-	}
-	name := "./" + req.RequestURI
-	hash64 := req.Header.Get("hash")
-	var hash []byte
-	if b, err := hex.DecodeString(hash64); err != nil {
-		u.respError(resp, UPLOAD_ERROR_HASH, err)
+	var token string
+	if req.Method == http.MethodGet {
+		token = req.URL.Query().Get(u.AuthField)
+	} else if req.Method == http.MethodPut {
+		token = req.Header.Get(u.AuthField)
+	} else if req.Method == http.MethodOptions {
+		resp.Header().Set("access-control-allow-origin", req.Header.Get("origin"))
+		resp.Header().Set("access-control-allow-method", "OPTIONS,GET,PUT")
+		resp.Header().Set("access-control-allow-header", "Content-Type,"+u.AuthField)
 		return
 	} else {
-		hash = b
-	}
-	defer func() { _ = req.Body.Close() }()
-	up := NewUploader(int64(u.BlockSize), u.Usn)
-	if err := up.UploadStream(name, hash, req.ContentLength, req.Body); err != nil {
-		u.respError(resp, UPLOAD_ERROR_PUSH, err)
+		resp.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	u.respData(resp, "ok")
+
+	resp.Header().Set("access-control-allow-origin", "*")
+	_ = os.MkdirAll(u.Root, os.ModePerm)
+	_ = os.MkdirAll(u.Temp, os.ModePerm)
+
+	var user *UserInfo
+	if uu, err := u.auth(req, token); err != nil {
+		u.respError(resp, UPLOAD_ERROR_AUTH, err)
+		return
+	} else {
+		user = uu
+	}
+	if req.Method == http.MethodGet {
+		u.Get(user, resp, req)
+	} else {
+		u.Upload(user, resp, req)
+	}
+}
+
+func (u *UploadHandler) Get(user *UserInfo, resp http.ResponseWriter, req *http.Request) {
+	hh := strings.ToLower(strings.TrimLeft(req.URL.Path, "/"))
+	mp := path.Join(u.Root, hh+EXT_META)
+	log.Println("get", hh, mp)
+	if FileExist(mp) {
+		if b, err := ioutil.ReadFile(mp); err == nil {
+			resp.Header().Set("content-type", "application/octet-stream")
+			resp.Header().Set("content-disposition", `attachment; filename="`+hh+EXT_META+`"`)
+			resp.Header().Set("content-length", strconv.Itoa(len(b)))
+			resp.WriteHeader(http.StatusOK)
+			_, _ = resp.Write(b)
+		} else {
+			resp.WriteHeader(http.StatusInternalServerError)
+		}
+	} else {
+		resp.WriteHeader(http.StatusNotFound)
+	}
+}
+
+func (u *UploadHandler) Upload(user *UserInfo, resp http.ResponseWriter, req *http.Request) {
+	defer func() { _ = req.Body.Close() }()
+	name := filepath.Base(req.URL.Path)
+	hash := strings.ToLower(req.URL.Query().Get("hash"))
+	// 快传
+	mp := path.Join(u.Root, hash+EXT_META)
+	h, her := hex.DecodeString(hash)
+	if FileExist(mp) {
+		log.Println("fast upload", user.Name, hash)
+		if b, er := ioutil.ReadFile(mp); er == nil {
+			u.respData(resp, map[string]interface{}{
+				"hash": h,
+				"name": name,
+				"meta": b,
+			})
+			return
+		}
+	}
+
+	if user.hasPermit(PERMIT_UPLOAD) == false {
+		u.respError(resp, UPLOAD_ERROR_AUTH, errPermit)
+		return
+	}
+
+	var tnh string
+	if her == nil {
+		tnh = hash
+	} else {
+		tn := ByteHash([]byte(fmt.Sprintf("%s:%s:%d", user.Name, req.URL.Path, time.Now().Unix())))
+		tnh = hex.EncodeToString(tn)
+	}
+
+	size := req.ContentLength
+
+	up := NewUploader(int64(u.BlockSize), u.Usn)
+
+	up.Processor = NewFileUploadProcessor(path.Join(u.Temp, tnh+EXT_UPLOADING), NewUploadInfo(name, size, up.Size))
+	up.Notify = &ConsoleNotify{}
+
+	if mt, err := up.UploadStream(req.Body); err != nil {
+		u.respError(resp, UPLOAD_ERROR_PUSH, err)
+		return
+	} else {
+		h := hex.EncodeToString(mt.Hash)
+		d := &bytes.Buffer{}
+		if err := meta.EncodeToStream(d, mt); err != nil {
+			u.respError(resp, UPLOAD_ERROR_META, err)
+			return
+		}
+		b := d.Bytes()
+		if err := ioutil.WriteFile(path.Join(u.Root, h+EXT_META), b, os.ModePerm); err != nil {
+			u.respError(resp, UPLOAD_ERROR_STOR, err)
+			return
+		}
+		u.respData(resp, map[string]interface{}{
+			"hash": mt.Hash,
+			"name": mt.Name,
+			"meta": b,
+		})
+	}
 }
 
 func (u *UploadHandler) respError(resp http.ResponseWriter, code int, err error) {
@@ -93,8 +211,9 @@ func (u *UploadHandler) respError(resp http.ResponseWriter, code int, err error)
 
 func (u *UploadHandler) respData(resp http.ResponseWriter, data interface{}) {
 	r := UploadResponse{
-		Code: UPLOAD_SUCCESS,
-		Data: data,
+		Code:    UPLOAD_SUCCESS,
+		Message: "success",
+		Data:    data,
 	}
 	if rj, err := json.Marshal(r); err != nil {
 		resp.Header().Set("Error", err.Error())
@@ -106,34 +225,43 @@ func (u *UploadHandler) respData(resp http.ResponseWriter, data interface{}) {
 	}
 }
 
-func (u *UploadHandler) auth(req *http.Request) error {
+func (u *UserInfo) hasPermit(n string) bool {
+	for _, a := range u.Permit {
+		if a == n {
+			return true
+		}
+	}
+	return false
+}
+
+func (u *UploadHandler) auth(req *http.Request, token string) (user *UserInfo, err error) {
 	if len(u.AuthRemote) == 0 {
-		log.Println("on auth")
-		return nil
+		log.Println("no auth")
+		return &UserInfo{"", []string{PERMIT_UPLOAD}}, nil
 	}
 	r := AuthRequest{
-		Token:    req.Header.Get(u.AuthHeader),
+		Token:    token,
 		RemoteIp: req.RemoteAddr,
 	}
 	rj, err := json.Marshal(r)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	resp, er := http.Post(u.AuthRemote, "application/json", bytes.NewBuffer(rj))
 	if er != nil {
-		return er
+		return nil, err
 	}
 	rs := new(AuthResponse)
 	defer func() { _ = resp.Body.Close() }()
 	bt, rer := ioutil.ReadAll(resp.Body)
 	if rer != nil {
-		return nil
+		return nil, rer
 	}
 	if er := json.Unmarshal(bt, rs); er != nil {
-		return er
+		return nil, er
 	}
 	if rs.Code != UPLOAD_SUCCESS {
-		return errors.New(fmt.Sprintf("auth error: errno(%d): %s", rs.Code, rs.Message))
+		return nil, errors.New(fmt.Sprintf("auth error: errno(%d): %s", rs.Code, rs.Message))
 	}
-	return nil
+	return rs.UserInfo, nil
 }
