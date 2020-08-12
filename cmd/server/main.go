@@ -2,7 +2,6 @@ package main
 
 import (
 	"dxkite.cn/storage"
-	uploader "dxkite.cn/storage-uploader"
 	"flag"
 	"log"
 	"net/http"
@@ -14,7 +13,7 @@ func init() {
 }
 
 func main() {
-	var usn = flag.String("usn", uploader.Default, "upload usn")
+	var usn = flag.String("usn", "", "upload usn")
 	var auth = flag.String("auth", "", "auth api")
 	var field = flag.String("auth_field", "token", "auth api field")
 	var root = flag.String("root", "data", "upload root path")

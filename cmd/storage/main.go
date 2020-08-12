@@ -2,7 +2,6 @@ package main
 
 import (
 	"dxkite.cn/storage"
-	uploader "dxkite.cn/storage-uploader"
 	"flag"
 	"log"
 	"os"
@@ -17,7 +16,7 @@ func init() {
 
 func main() {
 	var save = flag.String("path", "", "download save path")
-	var usn = flag.String("usn", uploader.Default, "upload usn")
+	var usn = flag.String("usn", "", "upload usn")
 
 	var install = flag.Bool("install", false, "install")
 	var uninstall = flag.Bool("uninstall", false, "uninstall")
