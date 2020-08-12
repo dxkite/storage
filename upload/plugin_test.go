@@ -5,5 +5,5 @@ import (
 )
 
 func TestPluginUploader_Upload(t *testing.T) {
-	uploadTest(t, "plugin://cmd?exec=./testdata/plugin-vim-cn.exe")
+	uploadTest(t, "plugin://cmd?exec=python&args=./testdata/plugin-vim-cn.py")
 }

@@ -3,6 +3,7 @@ package upload
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"net/url"
 	"os/exec"
 	"strings"
@@ -11,19 +12,19 @@ import (
 const PLUGIN = "plugin"
 
 type PluginUploader struct {
-	config Config
+	conf Config
 }
 
 func init() {
 	Register(PLUGIN, func(config Config) Uploader {
 		return &PluginUploader{
-			config: config,
+			conf: config,
 		}
 	})
 }
 
 func (p *PluginUploader) Upload(object *FileObject) (*Result, error) {
-	if p.config.Host == "cmd" {
+	if p.conf.Host == "cmd" {
 		return p.UploadByCmd(object)
 	}
 	return nil, errors.New("unknown plugin type")
@@ -31,17 +32,14 @@ func (p *PluginUploader) Upload(object *FileObject) (*Result, error) {
 
 func (p *PluginUploader) UploadByCmd(object *FileObject) (*Result, error) {
 	ret := &bytes.Buffer{}
-	var val url.Values
-	if q, er := url.ParseQuery(p.config.RawQuery); er != nil {
-		return nil, er
-	} else {
-		val = q
-	}
-	cmd := exec.Command(val.Get("exec"))
+	ers := &bytes.Buffer{}
+	val, _ := url.ParseQuery(p.conf.RawQuery)
+	cmd := exec.Command(val.Get("exec"), val["args"]...)
 	cmd.Stdin = bytes.NewBuffer(object.Data)
 	cmd.Stdout = ret
+	cmd.Stderr = ers
 	if err := cmd.Run(); err != nil {
-		return nil, err
+		return nil, errors.New(fmt.Sprintf("%v: %s", err, ers))
 	} else {
 		return &Result{
 			Url: strings.TrimSpace(ret.String()),
