@@ -31,19 +31,19 @@ func (p *PluginUploader) Upload(object *FileObject) (*Result, error) {
 }
 
 func (p *PluginUploader) UploadByCmd(object *FileObject) (*Result, error) {
-	ret := &bytes.Buffer{}
-	ers := &bytes.Buffer{}
-	val, _ := url.ParseQuery(p.conf.RawQuery)
-	cmd := exec.Command(val.Get("exec"), val["args"]...)
+	ob := &bytes.Buffer{}
+	eb := &bytes.Buffer{}
+	q, _ := url.ParseQuery(p.conf.RawQuery)
+	cmd := exec.Command(q.Get("exec"), q["args"]...)
 	cmd.Stdin = bytes.NewBuffer(object.Data)
-	cmd.Stdout = ret
-	cmd.Stderr = ers
+	cmd.Stdout = ob
+	cmd.Stderr = eb
 	if err := cmd.Run(); err != nil {
-		return nil, errors.New(fmt.Sprintf("%v: %s", err, ers))
+		return nil, errors.New(fmt.Sprintf("exec error: %v\nstderr:%s\nstdout:%s", err, eb.String(), ob.String()))
 	} else {
 		return &Result{
-			Url: strings.TrimSpace(ret.String()),
-			Raw: ret.Bytes(),
+			Url: strings.TrimSpace(ob.String()),
+			Raw: ob.Bytes(),
 		}, nil
 	}
 }
