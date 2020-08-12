@@ -10,3 +10,6 @@ const EXT_DOWNLOADING = ".downloading"
 
 const META_INFO = "Storage Download Index File"
 const META_NAME = "StorageFile"
+
+// 从环境获取的USN
+const ENV_USN = "STORAGE_USN"

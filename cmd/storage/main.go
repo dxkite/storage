@@ -4,6 +4,7 @@ import (
 	"dxkite.cn/storage"
 	"flag"
 	"log"
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
@@ -16,16 +17,18 @@ func init() {
 
 func main() {
 	var save = flag.String("path", "", "download save path")
-	var usn = flag.String("usn", "", "upload usn")
-
+	var usn = flag.String("usn", storage.DefaultUSN, "upload usn")
 	var install = flag.Bool("install", false, "install")
 	var uninstall = flag.Bool("uninstall", false, "uninstall")
-
 	var uncheck = flag.Bool("uncheck", false, "uncheck hash after downloaded")
 	var block = flag.Int("block_size", 2, "block size, mb")
-	var help = flag.Bool("help", false, "print help info")
 	var num = flag.Int("threads", 20, "max download threads")
 	var retry = flag.Int("retry", 20, "max retry when error")
+	var addr = flag.String("addr", "", "listen addr")
+	var auth = flag.String("auth", "", "auth api")
+	var field = flag.String("auth_field", "token", "auth api field")
+	var root = flag.String("root", "data", "upload root path")
+	var help = flag.Bool("help", false, "print help info")
 
 	flag.Parse()
 	p, _ := filepath.Abs(os.Args[0])
@@ -43,6 +46,21 @@ func main() {
 	if *help || flag.NArg() < 1 {
 		flag.Usage()
 		return
+	}
+
+	if len(*addr) > 0 {
+		log.Println("start server mode, listen at", *addr)
+		if len(*auth) > 0 {
+			log.Println("enable auth", *auth)
+		}
+		log.Fatal(http.ListenAndServe(*addr, &storage.UploadHandler{
+			Usn:        *usn,
+			BlockSize:  *block * 1024 * 1024,
+			AuthRemote: *auth,
+			AuthField:  *field,
+			Temp:       path.Join(*root, ".tmp"),
+			Root:       path.Join(*root, "storage"),
+		}))
 	}
 
 	name := flag.Arg(0)

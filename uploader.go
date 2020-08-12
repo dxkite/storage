@@ -12,6 +12,8 @@ import (
 	"path/filepath"
 )
 
+var DefaultUSN = os.Getenv(ENV_USN)
+
 type Uploader struct {
 	Size      int64
 	Usn       string
