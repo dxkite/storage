@@ -54,6 +54,9 @@ func main() {
 			}
 			storage.Download(name, *save, *uncheck == false, *num, *retry)
 		} else {
+			if len(*usn) == 0 {
+				log.Fatalln("empty upload usn")
+			}
 			storage.Upload(name, *usn, *block)
 		}
 	} else {

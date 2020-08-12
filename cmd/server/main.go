@@ -27,6 +27,10 @@ func main() {
 		return
 	}
 
+	if len(*usn) == 0 {
+		log.Fatalln("empty upload usn")
+	}
+
 	log.Println("start server at", *addr)
 	if len(*auth) > 0 {
 		log.Println("enable auth", *auth)
