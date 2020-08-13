@@ -1,0 +1,4 @@
+language: go
+script: go build ./cmd/storage
+go:
+  - 1.13.x

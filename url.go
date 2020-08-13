@@ -9,7 +9,7 @@ func InstallURL(exec string) error {
 	return nil
 }
 
-func UninstallURL(path string) {
+func UninstallURL(path string) error {
 	fmt.Sprintf("only support windows")
 	return nil
 }
