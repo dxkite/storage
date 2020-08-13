@@ -28,6 +28,7 @@ func main() {
 	var auth = flag.String("auth", "", "auth api")
 	var field = flag.String("auth_field", "token", "auth api field")
 	var root = flag.String("root", "data", "upload root path")
+	var static = flag.String("static", "web", "web static root path")
 	var help = flag.Bool("help", false, "print help info")
 
 	flag.Parse()
@@ -54,7 +55,9 @@ func main() {
 		if len(*auth) > 0 {
 			log.Println("enable auth", *auth)
 		}
-		log.Fatal(http.ListenAndServe(*addr, &storage.UploadHandler{
+		serve := http.NewServeMux()
+		serve.Handle("/", http.FileServer(http.Dir(*static)))
+		serve.Handle("/storage/", http.StripPrefix("/storage/", &storage.UploadHandler{
 			Usn:        *usn,
 			BlockSize:  *block * 1024 * 1024,
 			AuthRemote: *auth,
@@ -62,6 +65,7 @@ func main() {
 			Temp:       path.Join(*root, ".tmp"),
 			Root:       path.Join(*root, "storage"),
 		}))
+		log.Fatal(http.ListenAndServe(*addr, serve))
 	}
 
 	if flag.NArg() < 1 {
