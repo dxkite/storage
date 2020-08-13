@@ -31,7 +31,7 @@ if ($request['token'] === 'dxkite') {
 ### upload test
 
 ```bash
-curl --location --request PUT 'http://127.0.0.1:8080/陈奕迅 - 十年.mp3' \
+curl --location --request PUT 'http://127.0.0.1:8080/storage/陈奕迅 - 十年.mp3' \
 --header 'token: dxkite' \
 --header 'Content-Type: audio/mpeg' \
 --data-binary '@/E:/陈奕迅 - 十年.mp3'
