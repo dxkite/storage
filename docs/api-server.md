@@ -5,7 +5,7 @@ a storage server provider a put api to upload file
 ### run command
 
 ```bash
-server -auth http://127.0.0.1/auth.php
+storage -usn 'plugin://cmd?exec=python&args=./vim-cn.py' -addr ':8080' -auth http://127.0.0.1/auth.php
 ```
 
 ### auth server

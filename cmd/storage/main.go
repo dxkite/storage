@@ -31,6 +31,12 @@ func main() {
 	var help = flag.Bool("help", false, "print help info")
 
 	flag.Parse()
+
+	if *help {
+		flag.Usage()
+		return
+	}
+
 	p, _ := filepath.Abs(os.Args[0])
 
 	if *install {
@@ -40,11 +46,6 @@ func main() {
 
 	if *uninstall {
 		storage.Uninstall(p)
-		return
-	}
-
-	if *help || flag.NArg() < 1 {
-		flag.Usage()
 		return
 	}
 
@@ -61,6 +62,11 @@ func main() {
 			Temp:       path.Join(*root, ".tmp"),
 			Root:       path.Join(*root, "storage"),
 		}))
+	}
+
+	if flag.NArg() < 1 {
+		flag.Usage()
+		return
 	}
 
 	name := flag.Arg(0)
