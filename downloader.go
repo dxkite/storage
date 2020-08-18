@@ -106,7 +106,7 @@ func (r *DownloadRetryable) downloadBlock(dataBlock *meta.DataBlock, start, end 
 	var retry = false
 	var err error
 
-	buf, er := r.d.GetBlockData(string(dataBlock.Data), meta.EncodeType(r.d.Encode), meta.DataType(r.d.Type))
+	buf, er := r.d.GetBlockData(dataBlock.Data, meta.EncodeType(r.d.Encode), meta.DataType(r.d.Type))
 	if er != nil {
 		retry = true
 		err = er
@@ -150,7 +150,7 @@ func (d *Downloader) downloadBlock(dataBlock *meta.DataBlock) error {
 		_ = d.Processor.Process(PROCESS_EXIST, dataBlock.Index, start, end, nil)
 		return nil
 	}
-	
+
 	_ = d.Processor.Process(PROCESS_START, dataBlock.Index, start, end, nil)
 	log.Printf("[%.2f%%] block %d downloading", float64(d.Downloaded)*100/float64(d.DownloadTotal), dataBlock.Index)
 	dr := DownloadRetryable{d.BlockTry, d}
@@ -176,14 +176,18 @@ func (d *Downloader) downloadBlock(dataBlock *meta.DataBlock) error {
 }
 
 // 获取块数据
-func (d *Downloader) GetBlockData(url string, encode meta.EncodeType, dt meta.DataType) ([]byte, error) {
+func (d *Downloader) GetBlockData(data []byte, encode meta.EncodeType, dt meta.DataType) ([]byte, error) {
+	return GetBlockData(data, encode, dt)
+}
+
+// 获取块数据
+func GetBlockData(data []byte, encode meta.EncodeType, dt meta.DataType) ([]byte, error) {
 	var r io.Reader
 	buf := &bytes.Buffer{}
-
 	if dt == meta.Type_Stream {
-		r = strings.NewReader(url)
+		r = bytes.NewReader(data)
 	} else {
-		rr, er := upload.HttpGet(url)
+		rr, er := upload.HttpGet(string(data))
 		if er != nil {
 			return nil, er
 		}
