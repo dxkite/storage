@@ -37,7 +37,11 @@ func (u *Uploader) UploadFile(p string) error {
 	name := file.Name()
 	base := filepath.Base(name)
 	u.Notify = &ConsoleNotify{}
-	u.Processor = NewFileUploadProcessor(name+EXT_UPLOADING, NewUploadInfo(base, size, u.Size))
+	var mod int64 = -1 // 没有获取编辑时间
+	if s, er := file.Stat(); er == nil {
+		mod = s.ModTime().Unix()
+	}
+	u.Processor = NewFileUploadProcessor(name+EXT_UPLOADING, NewUploadInfo(base, size, u.Size, mod))
 	if mt, err := u.UploadStream(file); err != nil {
 		return err
 	} else {

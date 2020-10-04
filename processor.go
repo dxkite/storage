@@ -10,6 +10,7 @@ import (
 	"math"
 	"os"
 	"strconv"
+	"time"
 )
 
 type ProcessStatus int
@@ -126,11 +127,13 @@ type UploadInfo struct {
 	Meta  *meta.Info
 }
 
-func NewUploadInfo(name string, size, blockSize int64) *UploadInfo {
+// 创建上传信息
+func NewUploadInfo(name string, size, blockSize, time int64) *UploadInfo {
 	m := &meta.Info{
 		BlockSize: blockSize,
 		Size:      size,
 		Name:      name,
+		Time:      time,
 		Status:    meta.Create,
 		Type:      int32(meta.Type_URI),
 		Encode:    int32(meta.Encode_Image),
@@ -145,6 +148,9 @@ func NewUploadInfo(name string, size, blockSize int64) *UploadInfo {
 
 func (info *UploadInfo) EncodeToFile(path string) error {
 	f, er := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, os.ModePerm)
+	if info.Meta.Time < 0 {
+		info.Meta.Time = time.Now().Unix()
+	}
 	if er != nil {
 		return er
 	}

@@ -37,6 +37,7 @@ type Info struct {
 	Hash      []byte      `bencode:"hash"`
 	Name      string      `bencode:"name"`
 	Size      int64       `bencode:"size"`
+	Time      int64       `bencode:"time"`
 	BlockSize int64       `bencode:"block_size"`
 	Encode    int32       `bencode:"encode"`
 	Type      int32       `bencode:"type"`

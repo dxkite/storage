@@ -136,6 +136,13 @@ func (u *UploadHandler) Upload(user *UserInfo, resp http.ResponseWriter, req *ht
 	defer func() { _ = req.Body.Close() }()
 	name := filepath.Base(req.URL.Path)
 	hash := strings.ToLower(req.URL.Query().Get("hash"))
+	mod := time.Now().Unix()
+	if m := req.URL.Query().Get("time"); len(m) > 0 {
+		// Y-m-d h:i:s
+		if t, er := time.Parse("2006-01-02 15:04:05", m); er == nil {
+			mod = t.Unix()
+		}
+	}
 	// 快传
 	mp := path.Join(u.Root, hash+EXT_META)
 	h, her := hex.DecodeString(hash)
@@ -168,7 +175,7 @@ func (u *UploadHandler) Upload(user *UserInfo, resp http.ResponseWriter, req *ht
 
 	up := NewUploader(int64(u.BlockSize), u.Usn)
 
-	up.Processor = NewFileUploadProcessor(path.Join(u.Temp, tnh+EXT_UPLOADING), NewUploadInfo(name, size, up.Size))
+	up.Processor = NewFileUploadProcessor(path.Join(u.Temp, tnh+EXT_UPLOADING), NewUploadInfo(name, size, up.Size, mod))
 	up.Notify = &ConsoleNotify{}
 
 	if mt, err := up.UploadStream(req.Body); err != nil {
